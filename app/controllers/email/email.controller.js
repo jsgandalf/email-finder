@@ -69,11 +69,11 @@ exports.sendMessage = function(subject, body) {
     }],
     "headers": {
       "Reply-To": config.systemEmail
-    },
+    }
   };
   mandrill_client.messages.send({"message": message}, function(result) {
 //    console.log(result);
-    deferred.resolve(result);
+    deferred.resolve(false);
   }, function(e) {
     deferred.reject(e.name + ' - ' + e.message);
     // Mandrill returns the error as an object with name and message keys

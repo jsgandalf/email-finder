@@ -10,7 +10,8 @@ var request = require('request');
 var Socks = require('socks');
 var GoogleCtrl = require('./google.controller');
 var Proxy = require('../../models/proxy');
-var emailController = require('../email/email.controller')
+var emailController = require('../email/email.controller');
+var config = require('../../../config/config');
 
 function randomStr(m) {
   var m = m || 9; s = '', r = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz';
@@ -112,22 +113,23 @@ function createSocketConnection(proxy, mxRecordIp, emailToVerify, retry){
 
 function verifyEmail(mxRecordIp, emailToVerify, retry, oldProxy){
   //console.log(emailToVerify);
-  var updatePromise = new Bluebird(function(resolve){ resolve(true)});
+  var updatePromise = Q.when(false);
   if(typeof oldProxy != 'undefined' && oldProxy != null && oldProxy){
     updatePromise = Proxy.update({ _id: oldProxy._id}, { $set: { isDead: true}}).exec();
   }
   return updatePromise.then(function() {
-    return Proxydb.find({rnd: {$gte: Math.random()}}).sort({rnd:1}).limit(1).exec();
+    return Proxy.find({rnd: {$gte: Math.random()}}).sort({rnd:1}).limit(1).exec();
   }).then(function(proxy) {
-    if (proxy == null || typeof proxy == 'undefined') {
-      return emailController.sendMessage('Problem on Messagesumo Checker', 'You have run out of available proxies on email checker. Check your database or increase with your proxy provider plan!');
+    if (proxy.length == 0 || proxy == null || typeof proxy == 'undefined') {
+      return emailController.sendMessage('Problem on Messagesumo Checker', 'You have run out of available proxies on email checker. Check your database or increase with your proxy provider plan!  This is very bad... This means you need to get a developer looking at the messagesumo-email checker app ASAP, no questions asked.');
     }
+    proxy = proxy[0];
     return createSocketConnection(proxy, mxRecordIp, emailToVerify, 0)
       .then(function(data){
         if(!data){
-          return false;
+          return false; //a verified 5** response from the SMTP server
         }else if(data.retry != 0){
-          return verifyEmail(data.mxRecordIp, data.emailToVerify, retry, data.proxy)
+          return verifyEmail(data.mxRecordIp, data.emailToVerify, retry, data.proxy); //Retry up to 10 times with available proxies.
         }else{
           return data.emailToVerify;
         }
@@ -142,16 +144,18 @@ function verifyEmail(mxRecordIp, emailToVerify, retry, oldProxy){
 // Get list of accounts
 exports.index = function(req, res) {
   var domain;
-  if(typeof req.query.domain == 'undefined' || req.query.domain == ''){
+  if(req.query.key != config.apiKey) {
+    return res.status(500).json({ err: 'api key required'});
+  } else if(typeof req.query.domain == 'undefined' || req.query.domain == '') {
     return res.status(500).json({ err: 'domain required'});
-  } else if(typeof req.query.first == 'undefined' || req.query.first == ''){
+  } else if(typeof req.query.first == 'undefined' || req.query.first == '') {
     return res.status(500).json({ err: 'first name required'});
-  } else if(typeof req.query.last == 'undefined' || req.query.last == ''){
+  } else if(typeof req.query.last == 'undefined' || req.query.last == '') {
     return res.status(500).json({ err: 'last name required'});
   } else {
     domain = req.query.domain;
 
-    domain = purifyDomain(domain)
+    domain = purifyDomain(domain);
 
     var promise = new Bluebird(function(resolve){ resolve(domain)});
     //invoke a company lookup if this is not a url.
@@ -182,26 +186,23 @@ exports.index = function(req, res) {
 
         var patterns = [
           '{f}{last}',
-          '{first}'/*,
+          '{first}',
           '{first}{l}',
           '{first}.{last}',
           '{first}{last}',
           '{f}{l}',
           '{first}_{last}',
-          '{first}-{last}'*/
+          '{first}-{last}'
         ];
 
         return Q.allSettled(_.map(patterns, function(pattern) {
-          var email;
-          email = pattern
+          var emailPattern = pattern
             .replace('{first}', req.query.first)
             .replace('{last}', req.query.last)
             .replace('{f}', req.query.first.charAt(0))
             .replace('{l}', req.query.last.charAt(0));
 
-          //console.log(email.toLowerCase());
-          //var proxy = premiumPublicProxies[Math.floor((Math.random() * 3414))];
-          return verifyEmail(mxRecordIp, email.toLowerCase() + '@' + domain, 0, false);
+          return verifyEmail(mxRecordIp, emailPattern.toLowerCase() + '@' + domain, 0, false);
         }));
       }
     }).then(function(results) {
@@ -213,7 +214,7 @@ exports.index = function(req, res) {
           }
         });
       }
-      //console.log(verifiedEmails);
+      console.log(verifiedEmails);
       var emails = _.filter(verifiedEmails, function(email){
         return email;
       }).map(function(email){
