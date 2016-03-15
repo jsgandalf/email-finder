@@ -1,13 +1,14 @@
 var express = require('express'),
   router = express.Router(),
-  mongoose = require('mongoose'),
-  Article = mongoose.model('Article');
+  ProxyCtrl = require('./proxy/proxy.controller');
 
 module.exports = function (app) {
   app.use('/', router);
 };
 
-router.get('/', function (req, res, next) {
+router.get('/refreshProxy', ProxyCtrl.refreshProxies);
+
+/*router.get('/', function (req, res, next) {
   Article.find(function (err, articles) {
     if (err) return next(err);
     res.render('index', {
@@ -15,4 +16,4 @@ router.get('/', function (req, res, next) {
       articles: articles
     });
   });
-});
+});*/

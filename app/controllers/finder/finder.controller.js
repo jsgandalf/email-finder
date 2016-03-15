@@ -1,10 +1,16 @@
 var Bluebird = require('bluebird');
+var Q = require('q');
 var dns = require('dns');
 var _ = require('lodash');
 var net = require('net');
 var emailAccounts = require('../../../config/emailAccounts');
+var proxies = require('../../../config/proxies');
+var premiumPublicProxies = require('../../../config/premiumPublicProxies');
 var request = require('request');
 var Socks = require('socks');
+var GoogleCtrl = require('./google.controller');
+var Proxy = require('../../models/proxy');
+var emailController = require('../email/email.controller')
 
 function randomStr(m) {
   var m = m || 9; s = '', r = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz';
@@ -12,76 +18,130 @@ function randomStr(m) {
   return s;
 };
 
-function verifyEmail(proxyIp, proxyPort, mxRecordIp, emailToVerify){
-  var deferred = Bluebird.pending();
-  var smtpPort = 25;
-  var emailAccount = emailAccounts[Math.floor((Math.random() * 49))];
-  var options = {
-    proxy: {
-      ipaddress: proxyIp, // Random public proxy
-      port: proxyPort,
-      type: 5 // type is REQUIRED. Valid types: [4, 5]  (note 4 also works for 4a)
-      //userid: username + ":" + password
-      /*authentication: {
-       username: username,
-       password: password
-       }*/
-    },
-    target: {
-      host: mxRecordIp, // can be an ip address or domain (4a and 5 only)
-      port: smtpPort
-    },
-    command: 'connect'  // This defaults to connect, so it's optional if you're not using BIND or Associate.
-  };
+function purifyDomain(domain){
+  domain = domain.replace('http://', '').replace('www.', '');
+  if(domain == 'google.com'){
+    domain = 'gmail.com';
+  }
+  if(domain.indexOf('.com') != -1){
+    domain = domain.substring(0, domain.indexOf('.com') + 4);
+  }else if(domain.indexOf('.net') != -1){
+    domain = domain.substring(0, domain.indexOf('.net') + 4);
+  }else if(domain.indexOf('.org') != -1){
+    domain = domain.substring(0, domain.indexOf('.org') + 4);
+  }else if(domain.indexOf('.io') != -1){
+    domain = domain.substring(0, domain.indexOf('.io') + 3);
+  }else if(domain.indexOf('.us') != -1){
+    domain = domain.substring(0, domain.indexOf('.us') + 3);
+  }else if(domain.indexOf('.info') != -1){
+    domain = domain.substring(0, domain.indexOf('.info') + 5);
+  }
+  return domain;
+}
 
-  Socks.createConnection(options, function(err, socket, info) {
-    if (err){
-      console.log('custom error');
-      console.log(err);
-      deferred.reject(err);
-    } else {
-      console.log(info)
-      // Connection has been established, we can start sending data now:
-      //socket.write("GET / HTTP/1.1\nHost: google.com\n\n");
-      socket.write('HELO www.' + randomStr(Math.floor((Math.random() * 10) + 4)) + '.com\r\n');
-      socket.write("MAIL FROM: <"+ emailAccount.email +">\r\n");
-      socket.write("rcpt to:<" + emailToVerify + ">\r\n");
-      socket.on('data', function(data) {
-        data = data.toString("utf-8", 0, 12);
-        if(data.toString().match(/250/i) != null) {
-          //console.log('final check OK email valid.');
-          deferred.resolve(true);
-          socket.destroy();
-        } else if(data.toString().match(/220/i) != null) {
-          //console.log('email valid');
+function createSocketConnection(proxy, mxRecordIp, emailToVerify, retry){
+  return new Bluebird(function (resolve, reject) {
+    var smtpPort = 25;
+    var emailAccount = emailAccounts[Math.floor((Math.random() * 49))];
+
+    var options = {
+      proxy: {
+        ipaddress: proxy.ip, // Random public proxy
+        port: proxy.port,
+        type: proxy.type // type is REQUIRED. Valid types: [4, 5]  (note 4 also works for 4a)
+        //userid: username + ":" + password
+        /*authentication: {
+         username: username,
+         password: password
+         }*/
+      },
+      target: {
+        host: mxRecordIp, // can be an ip address or domain (4a and 5 only)
+        port: smtpPort
+      },
+      command: 'connect'  // This defaults to connect, so it's optional if you're not using BIND or Associate.
+    };
+    console.log(options)
+    console.log(emailToVerify);
+
+    Socks.createConnection(options, function (err, socket, info) {
+      var emailVerified = false;
+      var responseData = "";
+      if (err) {
+          //console.log('custom error');
+         console.log(err);
+        if (retry < 10) {
+          resolve({emailToVerify: emailToVerify, mxRecordIp:mxRecordIp, retry: retry + 1, proxy: proxy });
         } else {
-          deferred.reject('Email not valid');
-          //console.log('email not valid');
-          socket.destroy();
+          reject(false);
         }
-      });
-      socket.on('close', function () {
-        console.log('Client disconnected from proxy');
-      });
+      } else {
+        socket.write('HELO www.' + randomStr(Math.floor((Math.random() * 10) + 4)) + '.com\r\n');
+        socket.write("MAIL FROM: <" + emailAccount.email + ">\r\n");
+        socket.write("rcpt to:<" + emailToVerify + ">\r\n");
+        socket.write("QUIT\r\n");
+        socket.on('data', function (data) {
+          data = data.toString("utf-8");
+          responseData += data;
+          console.log(data);
+          if (responseData.match(/5[0-9][0-9]/i) != null) {
+            reject(false);
+          } else if (responseData.match(/221/i) != null && responseData.match(/250/i) != null && responseData.match(/220/i) != null) {
+            resolve({emailToVerify: emailToVerify, retry: 0});
+          }
+        });
+        socket.on('close', function () {
+          //console.log('Client disconnected from proxy');
+          //resolve(false);
+        });
 
-      socket.on('error', function (err) {
-        deferred.reject('Email not valid');
-        console.log('Error: ' + err.toString());
-      });
+        socket.on('error', function (err) {
+          //console.log('My Error: ' + err.toString());
+          socket.destroy();
+        });
 
-      // PLEASE NOTE: sockets need to be resumed before any data will come in or out as they are paused right before this callback is fired.
-      socket.resume();
+        // PLEASE NOTE: sockets need to be resumed before any data will come in or out as they are paused right before this callback is fired.
+        socket.resume();
 
-      // 569
-      // <Buffer 48 54 54 50 2f 31 2e 31 20 33 30 31 20 4d 6f 76 65 64 20 50 65...
-    }
+        // 569
+        // <Buffer 48 54 54 50 2f 31 2e 31 20 33 30 31 20 4d 6f 76 65 64 20 50 65...
+      }
+    });
   });
-  return deferred.promise;
+}
+
+function verifyEmail(mxRecordIp, emailToVerify, retry, oldProxy){
+  //console.log(emailToVerify);
+  var updatePromise = new Bluebird(function(resolve){ resolve(true)});
+  if(typeof oldProxy != 'undefined' && oldProxy != null && oldProxy){
+    updatePromise = Proxy.update({ _id: oldProxy._id}, { $set: { isDead: true}}).exec();
+  }
+  return updatePromise.then(function() {
+    return Proxydb.find({rnd: {$gte: Math.random()}}).sort({rnd:1}).limit(1).exec();
+  }).then(function(proxy) {
+    if (proxy == null || typeof proxy == 'undefined') {
+      return emailController.sendMessage('Problem on Messagesumo Checker', 'You have run out of available proxies on email checker. Check your database or increase with your proxy provider plan!');
+    }
+    return createSocketConnection(proxy, mxRecordIp, emailToVerify, 0)
+      .then(function(data){
+        if(!data){
+          return false;
+        }else if(data.retry != 0){
+          return verifyEmail(data.mxRecordIp, data.emailToVerify, retry, data.proxy)
+        }else{
+          return data.emailToVerify;
+        }
+      }).catch(function(err){
+        console.log(err);
+        return false;
+      })
+  });
 }
 
 
 // Get list of accounts
 exports.index = function(req, res) {
+  var domain;
   if(typeof req.query.domain == 'undefined' || req.query.domain == ''){
     return res.status(500).json({ err: 'domain required'});
   } else if(typeof req.query.first == 'undefined' || req.query.first == ''){
@@ -89,7 +149,24 @@ exports.index = function(req, res) {
   } else if(typeof req.query.last == 'undefined' || req.query.last == ''){
     return res.status(500).json({ err: 'last name required'});
   } else {
-    Bluebird.promisify(dns.resolveMx)(req.query.domain).then(function (mxServers) {
+    domain = req.query.domain;
+
+    domain = purifyDomain(domain)
+
+    var promise = new Bluebird(function(resolve){ resolve(domain)});
+    //invoke a company lookup if this is not a url.
+    if (domain.match(/^(([a-zA-Z]{1})|([a-zA-Z]{1}[a-zA-Z]{1})|([a-zA-Z]{1}[0-9]{1})|([0-9]{1}[a-zA-Z]{1})|([a-zA-Z0-9][a-zA-Z0-9-_]{1,61}[a-zA-Z0-9]))\.([a-zA-Z]{2,6}|[a-zA-Z0-9-]{2,30}\.[a-zA-Z]{2,3})$/i) == null) {
+      //The Zrnich Law Group, P.C.
+      promise = GoogleCtrl.findCompanyWebsite(domain);
+    }
+
+    promise.then(function(data) {
+      domain = purifyDomain(data.toLowerCase());
+      return Bluebird.promisify(dns.resolveMx)(domain);
+    }).then(function (mxServers) {
+      if(typeof mxServers == 'undefined' || mxServers.length < 1){
+        return res.json({"response":{"error":"No email found"}});
+      }
       var sorted = _.sortBy(mxServers, 'priority');
       if(sorted.length > 0 && typeof sorted[0] == 'undefined'){
         return res.json({err: 'Could not find email'});
@@ -98,153 +175,93 @@ exports.index = function(req, res) {
       }
     }).then(function(data) {
       if(typeof data == 'undefined'){
-        return res.json({err: 'Could not find email'});
+        return res.json({"response":{"error":"No email found"}});
       }else{
 
-        var proxyArry = emailAccount.proxy.split(":");
-        var ip = proxyArry[0];
-        var port = proxyArry[1];
-        var username = proxyArry[2];
-        var password = proxyArry[3];
-        console.log(ip, port, username, password);
-        var to = "sean@sharkagent.com";
         var mxRecordIp = data[0];
-        //console.log(mxRecordIp);
-        //return res.json({mxRecordIp: mxRecordIp})
-        var proxyPort = 8083;
-        var smtpPort = 25;
-        var TCP_BUFFER_SIZE = 1024;
 
+        var patterns = [
+          '{f}{last}',
+          '{first}'/*,
+          '{first}{l}',
+          '{first}.{last}',
+          '{first}{last}',
+          '{f}{l}',
+          '{first}_{last}',
+          '{first}-{last}'*/
+        ];
 
+        return Q.allSettled(_.map(patterns, function(pattern) {
+          var email;
+          email = pattern
+            .replace('{first}', req.query.first)
+            .replace('{last}', req.query.last)
+            .replace('{f}', req.query.first.charAt(0))
+            .replace('{l}', req.query.last.charAt(0));
 
-        /*var proxy = net.createServer(function (socket) {
-          var client;
-
-          console.log('Client connected to proxy');
-
-          // Create a new connection to the SMTP server
-          client = net.connect(port, ip);
-
-          // 2-way pipe between client and TCP server
-          socket.pipe(client).pipe(socket);
-
-          client.on('connect', function() {
-            client.write('HELO www.' + randomStr(Math.floor((Math.random() * 10) + 4)) + '.com\r\n');
-            client.write("MAIL FROM: <"+ from +">\r\n");
-            client.write("rcpt to:<" + to + ">\r\n");
-          });
-
-          client.on('data', function(data) {
-            console.log('Received: ' + data);
-            if(data.toString().match(/250/i) != null){
-              console.log('final check OK email valid.');
-              client.destroy();
-            } else if(data.toString().match(/220/i) != null || data.toString().match(/250/i) != null){
-              console.log('email valid')
-            }else{
-              console.log('email not valid');
-              client.destroy();
-            }
-            //client.destroy(); // kill client after server's response
-          });
-
-          socket.on('close', function () {
-            console.log('Client disconnected from proxy');
-          });
-
-          socket.on('error', function (err) {
-            console.log('Error: ' + err.soString());
-          });
-        });
-
-        //connect to proxy
-        var client = new net.Socket();
-        client.connect(port, ip, function(socket) {
-          //socket.pipe(socket)
-          console.log('logged in')
-
-        });
-
-        client.on('connect', function(socket) {
-          console.log('connected to proxy')
-          client.write('helo');
-        });
-
-        client.on('data', function(data) {
-          console.log(data)
-        });*/
-
-        /*var conn = net.createConnection(port,ip);
-        conn.on("connection", function (socket) {
-          console.log('found connection');
-          socket.on("data", function (c) {
-            console.log('opened connection');
-            var data = c + ''; // make sure it's a string
-            switch (data) {
-              case 'login: ': // prompting you for a login
-                socket.write(username);  // send username
-                break;
-              case 'password: ': // prompting you for password
-                socket.write(password);  // send password
-                break;
-              case 'Invalid Username!':
-                // handle this
-                break;
-              default:
-                // do something else
-                break;
-            }
-          })
-          socket.on("end", function () {
-            // ITS OVER!
-          })
-        })*/
-
-        // Create a new connection to the TCP server
-        //...some stuff to get my proxy config (credentials, host and port)
-        /*var proxyUrl = "http://" + username + ":" + password + "@" + ip + ":" + port;
-console.log(proxyUrl)
-        var proxiedRequest = request.defaults({'proxy': proxyUrl});
-        proxiedRequest.get('http://www.sharkagent.com')*/
-
-
-        /*var client = new net.Socket();
-        client.connect(smtpPort, mxRecordIp, function(socket) {
-          //socket.pipe(socket)
-        });
-
-        client.on('connect', function() {
-          client.write('HELO www.' + randomStr(Math.floor((Math.random() * 10) + 4)) + '.com\r\n');
-          client.write("MAIL FROM: <"+ from +">\r\n");
-          client.write("rcpt to:<" + to + ">\r\n");
-        });
-
-        client.on('data', function(data) {
-          console.log('Received: ' + data);
-          if(data.toString().match(/250/i) != null){
-            console.log('final check OK email valid.');
-            client.destroy();
-          } else if(data.toString().match(/220/i) != null || data.toString().match(/250/i) != null){
-            console.log('email valid')
-          }else{
-            console.log('email not valid');
-            client.destroy();
-          }
-          //client.destroy(); // kill client after server's response
-        });
-
-        client.on('close', function() {
-          console.log('Connection closed');
-        });
-        client.on('error', function(err) {
-          console.log(err)
-        })*/
+          //console.log(email.toLowerCase());
+          //var proxy = premiumPublicProxies[Math.floor((Math.random() * 3414))];
+          return verifyEmail(mxRecordIp, email.toLowerCase() + '@' + domain, 0, false);
+        }));
       }
-
-
+    }).then(function(results) {
+      var verifiedEmails = [];
+      if (results.length > 0) {
+        results.forEach(function (result) {
+          if (result.state == "fulfilled") {
+            verifiedEmails.push(result.value);
+          }
+        });
+      }
+      //console.log(verifiedEmails);
+      var emails = _.filter(verifiedEmails, function(email){
+        return email;
+      }).map(function(email){
+        return email.toLowerCase();
+      });
+      if(emails.length > 0) {
+        return res.json({
+          "response": {
+            "profile": {},
+            "domain": domain,
+            "last": req.query.last,
+            "email": emails[0],
+            "first": req.query.first,
+            "confidence": parseInt(100/emails.length),
+            "response": emails
+          }
+        });
+      }else{
+        //Could not find email at all: going to guess blind guess:
+       var guessEmail = '{f}{last}'
+          .replace('{last}', req.query.last)
+          .replace('{f}', req.query.first.charAt(0));
+        return res.json({
+          "response": {
+            "profile": {},
+            "domain": domain,
+            "last": req.query.last,
+            "email": guessEmail.toLowerCase() + '@' + domain,
+            "first": req.query.first,
+            "confidence": (Math.floor(Math.random() * 9) + 1),
+            "response": [guessEmail.toLowerCase() + '@' + domain]
+          }
+        });
+      }
     }).catch(function (err) {
       console.log(err);
-      return res.json({err: err});
+      return res.json({"response":{"error":"No email found"}});
     });
   }
 };
+
+function reflectMap(collection, fn) {
+  var concurrency = 1;
+  return Bluebird.map(collection, function(val) {
+    return Bluebird.try(function() {
+      return fn(val);
+    }).then(null, function(error) {
+      console.log('error in reflect map', error, error.stack);
+    });
+  }, {concurrency: concurrency});
+}
