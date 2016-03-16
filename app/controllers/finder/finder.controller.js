@@ -20,10 +20,11 @@ function randomStr(m) {
 };
 
 function purifyDomain(domain){
+  domain = domain.replace('https://', '');
   domain = domain.replace('http://', '').replace('www.', '');
-  if(domain == 'google.com'){
+  /*if(domain == 'google.com'){
     domain = 'gmail.com';
-  }
+  }*/
   if(domain.indexOf('.com') != -1){
     domain = domain.substring(0, domain.indexOf('.com') + 4);
   }else if(domain.indexOf('.net') != -1){
@@ -40,7 +41,7 @@ function purifyDomain(domain){
   return domain;
 }
 
-function createSocketConnection(proxy, mxRecordIp, emailToVerify, retry){
+function createSocketConnection(domain, proxy, mxRecordIp, emailToVerify, retry){
   return new Bluebird(function (resolve, reject) {
     var smtpPort = 25;
     var emailAccount = emailAccounts[Math.floor((Math.random() * 49))];
@@ -62,11 +63,9 @@ function createSocketConnection(proxy, mxRecordIp, emailToVerify, retry){
       },
       command: 'connect'  // This defaults to connect, so it's optional if you're not using BIND or Associate.
     };
-    console.log(options)
-    console.log(emailToVerify);
 
     Socks.createConnection(options, function (err, socket, info) {
-      var emailVerified = false;
+
       var responseData = "";
       if (err) {
           //console.log('custom error');
@@ -77,22 +76,29 @@ function createSocketConnection(proxy, mxRecordIp, emailToVerify, retry){
           reject(false);
         }
       } else {
-        socket.write('HELO www.' + randomStr(Math.floor((Math.random() * 10) + 4)) + '.com\r\n');
+        socket.write('HELO '+ domain + '\r\n');
         socket.write("MAIL FROM: <" + emailAccount.email + ">\r\n");
+        //socket.write("MAIL FROM: <johnsmith@gmail.com>\r\n");
         socket.write("rcpt to:<" + emailToVerify + ">\r\n");
         socket.write("QUIT\r\n");
         socket.on('data', function (data) {
           data = data.toString("utf-8");
           responseData += data;
-          console.log(data);
-          if (responseData.match(/5[0-9][0-9]/i) != null) {
+          //console.log(data);
+          if (responseData.match(/5[0-9][0-9](\s|\-)/i) != null && responseData.match(/221/i) != null) {
+            console.log(emailToVerify)
+            console.log(responseData)
+            socket.destroy();
             reject(false);
           } else if (responseData.match(/221/i) != null && responseData.match(/250/i) != null && responseData.match(/220/i) != null) {
+            socket.destroy();
+            console.log(emailToVerify)
+            console.log(responseData)
             resolve({emailToVerify: emailToVerify, retry: 0});
           }
         });
         socket.on('close', function () {
-          //console.log('Client disconnected from proxy');
+          console.log('Client disconnected from proxy');
           //resolve(false);
         });
 
@@ -111,7 +117,7 @@ function createSocketConnection(proxy, mxRecordIp, emailToVerify, retry){
   });
 }
 
-function verifyEmail(mxRecordIp, emailToVerify, retry, oldProxy){
+function verifyEmail(domain, mxRecordIp, emailToVerify, retry, oldProxy){
   //console.log(emailToVerify);
   var updatePromise = Q.when(false);
   if(typeof oldProxy != 'undefined' && oldProxy != null && oldProxy){
@@ -124,19 +130,19 @@ function verifyEmail(mxRecordIp, emailToVerify, retry, oldProxy){
       return emailController.sendMessage('Problem on Messagesumo Checker', 'You have run out of available proxies on email checker. Check your database or increase with your proxy provider plan!  This is very bad... This means you need to get a developer looking at the messagesumo-email checker app ASAP, no questions asked.');
     }
     proxy = proxy[0];
-    return createSocketConnection(proxy, mxRecordIp, emailToVerify, 0)
+    return createSocketConnection(domain, proxy, mxRecordIp, emailToVerify, 0)
       .then(function(data){
-        if(!data){
+        if(!data) {
           return false; //a verified 5** response from the SMTP server
-        }else if(data.retry != 0){
-          return verifyEmail(data.mxRecordIp, data.emailToVerify, retry, data.proxy); //Retry up to 10 times with available proxies.
-        }else{
+        } else if(data.retry != 0) {
+          return verifyEmail(domain, data.mxRecordIp, data.emailToVerify, retry, data.proxy); //Retry up to 10 times with available proxies.
+        } else {
           return data.emailToVerify;
         }
       }).catch(function(err){
         console.log(err);
         return false;
-      })
+      });
   });
 }
 
@@ -166,8 +172,10 @@ exports.index = function(req, res) {
 
     promise.then(function(data) {
       domain = purifyDomain(data.toLowerCase());
+      console.log(domain);
       return Bluebird.promisify(dns.resolveMx)(domain);
     }).then(function (mxServers) {
+      console.log(mxServers);
       if(typeof mxServers == 'undefined' || mxServers.length < 1){
         return res.json({"response":{"error":"No email found"}});
       }
@@ -178,6 +186,7 @@ exports.index = function(req, res) {
         return Bluebird.promisify(dns.resolve4)(sorted[0].exchange);
       }
     }).then(function(data) {
+      console.log(data);
       if(typeof data == 'undefined'){
         return res.json({"response":{"error":"No email found"}});
       }else{
@@ -202,7 +211,7 @@ exports.index = function(req, res) {
             .replace('{f}', req.query.first.charAt(0))
             .replace('{l}', req.query.last.charAt(0));
 
-          return verifyEmail(mxRecordIp, emailPattern.toLowerCase() + '@' + domain, 0, false);
+          return verifyEmail(domain, mxRecordIp, emailPattern.toLowerCase() + '@' + domain, 0, false);
         }));
       }
     }).then(function(results) {

@@ -117,7 +117,7 @@ exports.sendMessageDevelopment = function(subject, body) {
 
 exports.errorMessage = function(err) {
   var mandrill_client = new mandrill.Mandrill(config.mandrill);
-  var html = "<p>Error on Message Sumo Checker app,</p><p>" + err +'<p>' + err.stack + '</p>';
+  var html = "<p>Error on Message Sumo Email Checker app,</p><p>" + err +'<p>' + err.stack + '</p>';
   var message = {
     "html": html,
     "text": config.companyName + " crash: " + err + ' '+ err.stack,

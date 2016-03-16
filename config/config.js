@@ -10,7 +10,7 @@ var config = {
       name: 'messagesumo-email'
     },
     port: 3000,
-    db: 'mongodb://admindb1484988:z927fjD984KIc0Kdj1!390BBa@candidate.53.mongolayer.com:10223,candidate.52.mongolayer.com:10634/messagesumo-email?replicaSet=set-560ded97f3ea5ebdda00018d'
+    db: 'mongodb://adbrocks99:a14AbbJJ9dlkUi023jlsdf@candidate.53.mongolayer.com:10223,candidate.52.mongolayer.com:10634/messagesumo-email?replicaSet=set-560ded97f3ea5ebdda00018d'
   },
 
   test: {
@@ -19,7 +19,7 @@ var config = {
       name: 'messagesumo-email'
     },
     port: 3000,
-    db: 'mongodb://admindb1484988:z927fjD984KIc0Kdj1!390BBa@candidate.53.mongolayer.com:10223,candidate.52.mongolayer.com:10634/messagesumo-email?replicaSet=set-560ded97f3ea5ebdda00018d'
+    db: 'mongodb://adbrocks99:a14AbbJJ9dlkUi023jlsdf@candidate.53.mongolayer.com:10223,candidate.52.mongolayer.com:10634/messagesumo-email?replicaSet=set-560ded97f3ea5ebdda00018d'
   },
 
   production: {
@@ -28,7 +28,7 @@ var config = {
       name: 'messagesumo-email'
     },
     port: 3000,
-    db: 'mongodb://admindb1484988:z927fjD984KIc0Kdj1!390BBa@candidate.53.mongolayer.com:10223,candidate.52.mongolayer.com:10634/messagesumo-email?replicaSet=set-560ded97f3ea5ebdda00018d'
+    db: 'mongodb://adbrocks99:a14AbbJJ9dlkUi023jlsdf@candidate.53.mongolayer.com:10223,candidate.52.mongolayer.com:10634/messagesumo-email?replicaSet=set-560ded97f3ea5ebdda00018d'
   }
 };
 

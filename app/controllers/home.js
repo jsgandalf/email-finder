@@ -8,12 +8,13 @@ module.exports = function (app) {
 
 router.get('/refreshProxy', ProxyCtrl.refreshProxies);
 
-/*router.get('/', function (req, res, next) {
-  Article.find(function (err, articles) {
+router.get('/*', function (req, res, next) {
+  res.send(403);
+  /*Article.find(function (err, articles) {
     if (err) return next(err);
     res.render('index', {
       title: 'Generator-Express MVC',
       articles: articles
     });
-  });
-});*/
+  });*/
+});

@@ -3,7 +3,8 @@
 var express = require('express'),
   config = require('./config/config'),
   glob = require('glob'),
-  mongoose = require('mongoose');
+  mongoose = require('mongoose'),
+  emailController = require('./app/controllers/email/email.controller');
 
 mongoose.connect(config.db);
 var db = mongoose.connection;
@@ -17,6 +18,14 @@ models.forEach(function (model) {
   require(model);
 });
 var app = express();
+
+process.on('uncaughtException', function(err) {
+  console.log('Caught exception: ' + err);
+  console.log(err.stack);
+  if(process.env.NODE_ENV == 'production') {
+    emailController.errorMessage(err);
+  }
+});
 
 require('./config/express')(app, config);
 

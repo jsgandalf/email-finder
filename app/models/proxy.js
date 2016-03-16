@@ -8,11 +8,16 @@ var ProxySchema = new Schema({
   port: Number,
   type: Number,
   isDead: {type: Boolean, default: false},
-  rnd: {type: Number, default: Math.random()}
+  rnd: {type: Number, default: Math.random()},
+  created: {type: Date, default: Date.now()}
 });
 
 
-ProxySchema.index({ ip: 1, port: 1, type: 1, rnd: 1}, { unique: true });
+ProxySchema.index({ ip: 1, port: 1, type: 1}, { unique: true });
+
+ProxySchema.index({ rnd: 1 });
+
+
 
 
 module.exports = mongoose.model('Proxy', ProxySchema);
