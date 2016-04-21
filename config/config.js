@@ -44,3 +44,18 @@ var all = {
 };
 
 module.exports = _.assign(config[env], all);
+
+//mongo candidate.52.mongolayer.com:10634/messagesumo-email -u adbrocks99 -pa14AbbJJ9dlkUi023jlsdf
+// db.proxies.remove({ created: { $lte:ISODate("2016-04-19T15:48:02.424Z") }})
+
+/*
+ {
+ _id: ObjectId("57174c56dd958111008fe5f4"),
+ ip: "189.90.34.186",
+ port: NumberLong("29081"),
+ type: NumberLong("5"),
+ rnd: 0.9298582619521767,
+ created: ISODate("2016-04-20T09:31:02.156Z"),
+ isDead: false
+ }
+ */

@@ -32,7 +32,8 @@ exports.refreshProxies = function(req, res){
         type: parseInt(split2[1].replace('socks', '')),
         rnd: Math.random(),
         created: new Date(),
-        isDead: false
+        isDead: false,
+        private: false
       }
     });
   }).then(function(data){
