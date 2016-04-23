@@ -7,9 +7,10 @@ var ProxySchema = new Schema({
   ip: String,
   port: Number,
   type: Number,
-  isDead: {type: Boolean, default: false},
-  rnd: {type: Number, default: Math.random()},
-  created: {type: Date, default: Date.now()}
+  isDead: { type: Boolean, default: false },
+  rnd: { type: Number, default: Math.random() },
+  created: {type: Date, default: Date.now() },
+  private: { type: Boolean, default: false }
 });
 
 

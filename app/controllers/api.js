@@ -9,3 +9,4 @@ module.exports = function (app) {
 
 router.get('/guess', auth.isAuthenticated(), FinderCtrl.index);
 
+router.get('/insert', FinderCtrl.insertProxies);

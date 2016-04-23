@@ -51,36 +51,24 @@ function createSocketConnection(domain, proxy, mxRecordIp, emailToVerify, retry)
     var smtpPort = 25;
     var emailAccount = emailAccounts[Math.floor((Math.random() * 49))];
 
-
-
-    /*var options = {
-      proxy: {
-        ipaddress: "37.58.52.8", // Random public proxy
-        port: "222",
-        type: 5,  // type is REQUIRED. Valid types: [4, 5]  (note 4 also works for 4a)
-        //userid: 'bryson' + ":" + 'Daflin33!',
-        authentication: {
-          username: 'bryson',
-          password: 'Daflin33!'
-        }
-      },
-      target: {
-        host: mxRecordIp, // can be an ip address or domain (4a and 5 only)
-        port: smtpPort
-      },
-      command: 'connect'  // This defaults to connect, so it's optional if you're not using BIND or Associate.
-    };*/
+    var proxy = {
+      ip: "vps77691.vps.ovh.ca",
+      port: 18280,
+      type: 5
+    };
+    var username = "s5";
+    var password = "s55";
 
     var options = {
       proxy: {
         ipaddress: proxy.ip, // Random public proxy
         port: proxy.port,
-        type: proxy.type // type is REQUIRED. Valid types: [4, 5]  (note 4 also works for 4a)
+        type: proxy.type, // type is REQUIRED. Valid types: [4, 5]  (note 4 also works for 4a)
         //userid: username + ":" + password
-        /*authentication: {
+        authentication: {
          username: username,
          password: password
-         }*/
+         }
       },
       target: {
         host: mxRecordIp, // can be an ip address or domain (4a and 5 only)
@@ -89,16 +77,19 @@ function createSocketConnection(domain, proxy, mxRecordIp, emailToVerify, retry)
       command: 'connect'  // This defaults to connect, so it's optional if you're not using BIND or Associate.
     };
 
+    console.log(mxRecordIp);
+
     Socks.createConnection(options, function (err, socket, info) {
       var responseData = "";
       if (err) {
          console.log('failed to connect');
          console.log(err);
-        if (retry < 10) {
+        /*if (retry < 10) {
           resolve({emailToVerify: emailToVerify, mxRecordIp:mxRecordIp, retry: retry + 1, proxy: proxy });
         } else {
           reject(false);
-        }
+        }*/
+        reject(false);
       } else {
         console.log('writing Helo');
         socket.write('HELO '+ domain + '\r\n');
@@ -165,11 +156,8 @@ function verifyEmail(domain, mxRecordIp, emailToVerify, retry, oldProxy){
     updatePromise = Proxy.update({ _id: oldProxy._id}, { $set: { isDead: true}}).exec();
   }*/
 
-  var dateCounter = moment().subtract(1, 'week'),
-    today = moment().hour(0).minute(0).millisecond(0);
-
   return updatePromise.then(function() {
-    return Proxy.find({rnd: {$gte: Math.random()}, created: { $gte: dateCounter.toDate() }}).sort({rnd:1}).limit(1).exec();
+    return Proxy.find({rnd: {$gte: Math.random()} }).sort({rnd:1}).limit(1).exec();
   }).then(function(proxy) {
     if (proxy.length == 0 || proxy == null || typeof proxy == 'undefined') {
       return emailController.sendMessage('Problem on Messagesumo Checker', 'You have run out of available proxies on email checker. Check your database or increase with your proxy provider plan!  This is very bad... This means you need to get a developer looking at the messagesumo-email checker app ASAP, no questions asked.');
@@ -234,14 +222,16 @@ exports.index = function(req, res) {
       //{"response":{"profile":{},"domain":"healthgrades.com","last":"Cotten","email":"ncotten@healthgrades.com","first":"Nancy","confidence":9,"response":["ncotten@healthgrades.com"]}}
 
       var patterns = [
-        '{f}{last}',
+        '{f}{last}'
+        /*'{last}',
+        '{f}{f2}{last}'
         '{first}',
         '{first}{l}',
         '{first}.{last}',
         '{first}{last}',
         '{f}{l}',
         '{first}_{last}',
-        '{first}-{last}'
+        '{first}-{last}'*/
       ];
 
       return Q.allSettled(_.map(patterns, function(pattern) {
@@ -249,6 +239,7 @@ exports.index = function(req, res) {
           .replace('{first}', firstName)
           .replace('{last}', lastName)
           .replace('{f}', firstName.charAt(0))
+          .replace('{f2}', firstName.charAt(1))
           .replace('{l}', lastName.charAt(0));
 
         return verifyEmail(domain, mxRecordIp, emailPattern.toLowerCase() + '@' + domain, 0, false);
@@ -304,8 +295,39 @@ exports.index = function(req, res) {
   });
 };
 
+var myProxy = require('../../models/proxy');
+
+function massInsert(data) {
+  return new Bluebird(function(resolve, reject) {
+    myProxy.collection.insert(data, { ordered: false }, function(err, info) {
+      if(err) {
+        reject(err);
+      } else {
+        resolve(true)
+      }
+    });
+  })
+}
+
+exports.insertProxies = function(){
+  var privateProxies = require('../../../config/proxies');
+  var newprox = _.map(privateProxies, function(data){
+    return {
+      ip: data.ip,
+      port: data.port,
+      type: 5,
+      rnd: Math.random(),
+      created: new Date(),
+      isDead: false,
+      private: true
+    }
+  });
+
+  massInsert(newprox);
+};
+
 function reflectMap(collection, fn) {
-  var concurrency = 2;
+  var concurrency = 1;
   return Bluebird.map(collection, function(val) {
     return Bluebird.try(function() {
       return fn(val);

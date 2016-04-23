@@ -17,7 +17,7 @@ function massInsert(data){
 }
 
 exports.refreshProxies = function(req, res){
-  Bluebird.promisify(request.get)('http://list.didsoft.com/get?type=socks&premium=yes&email=messagesumo@gmail.com&pass=jfjfnm&showcountry=no').then(function(results){
+  Bluebird.promisify(request.get)('http://list.didsoft.com/get?type=socks&premium=yes&email=messagesumo@gmail.com&pass=fhwrv7&showcountry=no').then(function(results){
     var proxies = results.body.split('\n');
     //console.log(proxies)
     return _.filter(proxies, function(proxy) {
