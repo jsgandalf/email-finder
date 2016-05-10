@@ -303,7 +303,7 @@ function massInsert(data) {
       if(err) {
         reject(err);
       } else {
-        resolve(true)
+        resolve(true);
       }
     });
   })
