@@ -3,7 +3,12 @@ var config = require('../../../config/config');
 var privateProxies = require('../../../config/privateProxies');
 var Bluebird = require('bluebird');
 var Proxy = require('../../models/proxy');
+var PrivateProxy = require('../../models/privateProxies');
 var reflectMap = require('../../utils/reflect-map');
+
+function getRandomInt(min, max) {
+  return Math.floor(Math.random() * (max - min + 1)) + min;
+}
 
 function createSocketConnection(ip, port, type, username, password) {
   return new Promise(function (resolve, reject) {
@@ -14,6 +19,13 @@ function createSocketConnection(ip, port, type, username, password) {
       type: type
     };
 
+    var host = [
+      "www.yahoo.com",
+      "www.google.com",
+      "www.ebay.com"
+    ];
+
+
     var options = {
       proxy: {
         ipaddress: proxy.ip, // Random public proxy
@@ -21,7 +33,7 @@ function createSocketConnection(ip, port, type, username, password) {
         type: proxy.type // type is REQUIRED. Valid types: [4, 5]  (note 4 also works for 4a)
       },
       target: {
-        host: "www.yahoo.com", // can be an ip address or domain (4a and 5 only)
+        host: host[getRandomInt(0,2)], // can be an ip address or domain (4a and 5 only)
         port: 80
       },
       command: 'connect'  // This defaults to connect, so it's optional if you're not using BIND or Associate.
@@ -36,11 +48,11 @@ function createSocketConnection(ip, port, type, username, password) {
 
     Socks.createConnection(options, function (err, socket, info) {
       if (err) {
-        //console.log('failed to connect to ' + proxy.ip);
-        //console.log(err);
+        console.log('failed to connect to ' + proxy.ip);
+        console.log(err);
         reject('failed to connect');
       } else {
-        //console.log('success')
+        console.log('success')
         resolve(true);
         socket.on('error', function (err) {
           reject(err);
@@ -65,6 +77,17 @@ exports.test = function() {
       return createSocketConnection(proxy.ip, proxy.port, proxy.type).catch(function(err){
         //mark as dead.
         return Proxy.update({ _id: proxy._id}, { $set: { isDead: true }}).exec();
+      });
+    }, 1);
+  });
+};
+
+exports.testPrivate = function() {
+  return PrivateProxy.find({ isDead: false }).exec().then(function (proxies) {
+    return reflectMap(proxies, function (proxy) {
+      return createSocketConnection(proxy.ip, proxy.port, 5, config.privateProxyUsername, config.privateProxyPassword).catch(function(err){
+        //mark as dead.
+        return PrivateProxy.update({ _id: proxy._id}, { $set: { isDead: true }}).exec();
       });
     }, 1);
   });

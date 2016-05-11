@@ -10,6 +10,8 @@ var PrivateProxySchema = new Schema({
   isDead: { type: Boolean, default: false },
   rnd: { type: Number, default: Math.random() },
   created: {type: Date, default: Date.now() },
+  password: String,
+  username: String,
   provider: String //example ovh, bluehost, godaddy
 });
 

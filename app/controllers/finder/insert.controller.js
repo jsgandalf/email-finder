@@ -3,6 +3,7 @@ var PrivateProxy = require('../../models/privateProxies');
 var privateProxies = require('../../../config/privateProxies');
 var _ = require('lodash');
 var Bluebird = require('bluebird');
+var config = require('../../../config/config');
 
 function massInsert(data) {
   console.log('inserting')
@@ -26,7 +27,9 @@ exports.insertProxies = function(req, res){
       rnd: Math.random(),
       created: new Date(),
       isDead: false,
-      provider: 'ovh'
+      provider: 'ovh',
+      username: config.privateProxyUsername,
+      password: config.privateProxyPassword
     }
   });
 
@@ -37,14 +40,3 @@ exports.insertProxies = function(req, res){
     res.send(500);
   });
 };
-
-exports.removeOldProxies = function(req, res){
-  var today = new Date();
-  today.setDate(today.getDate()-1);
-  return Proxy.remove({ created: { $lte: today }}).exec().then(function(){
-    return res.send(200);
-  }, function(){
-    return res.send(500);
-  });
-};
-

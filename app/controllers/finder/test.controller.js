@@ -1,3 +1,4 @@
+/*
 var Bluebird = require('bluebird');
 var Q = require('q');
 var dns = require('dns');
@@ -26,9 +27,9 @@ function purifyName(str){
 function purifyDomain(domain){
   domain = domain.replace('https://', '');
   domain = domain.replace('http://', '').replace('www.', '');
-  /*if(domain == 'google.com'){
-    domain = 'gmail.com';
-  }*/
+  /!*if(domain == 'google.com'){
+   domain = 'gmail.com';
+   }*!/
   if(domain.indexOf('.com') != -1){
     domain = domain.substring(0, domain.indexOf('.com') + 4);
   }else if(domain.indexOf('.net') != -1){
@@ -58,10 +59,10 @@ function createSocketConnection(domain, proxy, mxRecordIp, emailToVerify, retry)
         port: proxy.port,
         type: proxy.type, // type is REQUIRED. Valid types: [4, 5]  (note 4 also works for 4a)
         //userid: username + ":" + password
-        /*authentication: {
+        /!*authentication: {
          username: username,
          password: password
-         }*/
+         }*!/
       },
       target: {
         host: mxRecordIp, // can be an ip address or domain (4a and 5 only)
@@ -82,8 +83,8 @@ function createSocketConnection(domain, proxy, mxRecordIp, emailToVerify, retry)
     Socks.createConnection(options, function (err, socket, info) {
       var responseData = "";
       if (err) {
-         //console.log('failed to connect');
-         console.log(err);
+        //console.log('failed to connect');
+        console.log(err);
         if (retry < 10) {
           console.log('retry: ',retry);
           resolve({emailToVerify: emailToVerify, mxRecordIp:mxRecordIp, retry: retry + 1, proxy: proxy });
@@ -110,8 +111,8 @@ function createSocketConnection(domain, proxy, mxRecordIp, emailToVerify, retry)
             socket.destroy();
           }else if (responseData.match(/5[0-9][0-9](\s|\-)/i) != null && responseData.match(/221/i) != null) {
             console.log("Not a valid email: ",emailToVerify)
-            /*console.log(emailToVerify)
-            console.log(responseData)*/
+            /!*console.log(emailToVerify)
+             console.log(responseData)*!/
             socket.destroy();
             reject(false);
           } else if (responseData.match(/221/i) != null && responseData.match(/250/i) != null && responseData.match(/220/i) != null) {
@@ -140,89 +141,40 @@ function createSocketConnection(domain, proxy, mxRecordIp, emailToVerify, retry)
   });
 }
 
-function verifyEmail(domain, mxRecordIp, emailToVerify, retry, oldProxy){
+function verifyEmail(domain, emailToVerify, retry){
   console.log("trying to verify: " + emailToVerify)
-  var updatePromise = Q.when(false);
-  if(typeof oldProxy != 'undefined' && oldProxy != null && oldProxy){
-    updatePromise = Proxy.update({ _id: oldProxy._id}, { $set: { isDead: true}}).exec();
-  }
-
-  return updatePromise.then(function() {
-    return Proxy.find({ isDead: false, rnd: {$gte: Math.random()} }).sort({rnd:1}).limit(1).exec();
-  }).then(function(proxy) {
-    if (proxy.length == 0 || proxy == null || typeof proxy == 'undefined') {
-      return emailController.sendMessage('Problem on Messagesumo Checker', 'You have run out of available proxies on email checker. Check your database or increase with your proxy provider plan!  This is very bad... This means you need to get a developer looking at the messagesumo-email checker app ASAP, no questions asked.');
-    }
-    proxy = proxy[0];
-    return createSocketConnection(domain, proxy, mxRecordIp, emailToVerify, retry)
-      .then(function(data){
-        if(!data) {
-          return false; //a verified 5** response from the SMTP server
-        } else if(data.retry != 0) {
-          return verifyEmail(domain, data.mxRecordIp, data.emailToVerify, data.retry, data.proxy); //Retry up to 10 times with available proxies.
-        } else {
-          return data.emailToVerify;
-        }
-      }).catch(function(err){
-        console.log(err);
-        return false;
-      });
-  });
+  return createSocketConnection(domain, proxy, mxRecordIp, emailToVerify, retry)
+    .then(function(data){
+      if(!data) {
+        return false; //a verified 5** response from the SMTP server
+      } else if(data.retry != 0) {
+        return verifyEmail(domain, data.mxRecordIp, data.emailToVerify, data.retry, data.proxy); //Retry up to 10 times with available proxies.
+      } else {
+        return data.emailToVerify;
+      }
+    }).catch(function(err){
+      console.log(err);
+      return false;
+    });
 }
 
 
 // Get list of accounts
 exports.index = function(req, res) {
-  var domain, firstName, lastName;
-
-  domain = req.query.domain;
-  firstName = purifyName(req.query.first);
-  lastName = purifyName(req.query.last);
-  domain = purifyDomain(domain);
-
-  var promise = new Bluebird(function(resolve){ resolve(domain)});
-  //invoke a company lookup if this is not a url.
-  if (domain.match(/^(([a-zA-Z]{1})|([a-zA-Z]{1}[a-zA-Z]{1})|([a-zA-Z]{1}[0-9]{1})|([0-9]{1}[a-zA-Z]{1})|([a-zA-Z0-9][a-zA-Z0-9-_]{1,61}[a-zA-Z0-9]))\.([a-zA-Z]{2,6}|[a-zA-Z0-9-]{2,30}\.[a-zA-Z]{2,3})$/i) == null) {
-    //The Zrnich Law Group, P.C.
-    promise = GoogleCtrl.findCompanyWebsite(domain);
-  }
-
-  promise.then(function(data) {
-    domain = purifyDomain(data.toLowerCase());
-    //console.log(domain);
-    return Bluebird.promisify(dns.resolveMx)(domain);
-  }).then(function (mxServers) {
-    //console.log(mxServers);
-    if(typeof mxServers == 'undefined' || mxServers.length < 1){
-      return res.json({"response":{"error":"No email found"}});
-    }
-    var sorted = _.sortBy(mxServers, 'priority');
-    if(sorted.length > 0 && typeof sorted[0] == 'undefined'){
-      return res.json({err: 'Could not find email'});
-    }else{
-      return Bluebird.promisify(dns.resolve4)(sorted[0].exchange);
-    }
-  }).then(function(data) {
-    //console.log(data);
-    if(typeof data == 'undefined'){
-      return res.json({"response":{"error":"No email found"}});
-    }else{
-
-      var mxRecordIp = data[0];
-
-      //{"response":{"profile":{},"domain":"healthgrades.com","last":"Cotten","email":"ncotten@healthgrades.com","first":"Nancy","confidence":9,"response":["ncotten@healthgrades.com"]}}
-
+      var firstName = "sean",
+        lastName = "thomas",
+        domain = "solarninja.com";
       var patterns = [
         '{f}{last}',
         '{last}'
-        /*'{f}{f2}{last}',
-        '{first}',
-        '{first}{l}',
-        '{first}.{last}',
-        '{first}{last}',
-        '{f}{l}',
-        '{first}_{last}',
-        '{first}-{last}'*/
+        /!*'{f}{f2}{last}',
+         '{first}',
+         '{first}{l}',
+         '{first}.{last}',
+         '{first}{last}',
+         '{f}{l}',
+         '{first}_{last}',
+         '{first}-{last}'*!/
       ];
 
       return reflectMap(patterns, function(pattern) {
@@ -233,18 +185,18 @@ exports.index = function(req, res) {
           .replace('{f2}', firstName.charAt(1))
           .replace('{l}', lastName.charAt(0));
 
-        return verifyEmail(domain, mxRecordIp, emailPattern.toLowerCase() + '@' + domain, 0, false);
+        return verifyEmail(domain, emailPattern.toLowerCase() + '@' + domain, 0);
       });
     }
   }).then(function(results) {
     var verifiedEmails = [];
-    /*if (results.length > 0) {
-      results.forEach(function (result) {
-        if (result.state == "fulfilled") {
-          verifiedEmails.push(result.value);
-        }
-      });
-    }*/
+    /!*if (results.length > 0) {
+     results.forEach(function (result) {
+     if (result.state == "fulfilled") {
+     verifiedEmails.push(result.value);
+     }
+     });
+     }*!/
     console.log('-------- all settled ---------');
     console.log(verifiedEmails);
     var emails = _.filter(verifiedEmails, function(email){
@@ -266,7 +218,7 @@ exports.index = function(req, res) {
       });
     }else{
       //Could not find email at all: going to guess blind guess:
-     var guessEmail = '{f}{last}'
+      var guessEmail = '{f}{last}'
         .replace('{last}', lastName)
         .replace('{f}', firstName.charAt(0));
       return res.json({
@@ -286,5 +238,4 @@ exports.index = function(req, res) {
     return res.json({"response":{"error":"No email found"}});
   });
 };
-
-//db.proxies.remove({ created: { $lte: ISODate("2016-04-19T15:34:02.242Z") }})
+*/
