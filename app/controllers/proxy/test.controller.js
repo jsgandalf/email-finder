@@ -36,9 +36,11 @@ function createSocketConnection(ip, port, type, username, password) {
 
     Socks.createConnection(options, function (err, socket, info) {
       if (err) {
-        console.log('failed to connect to ' + proxy.ip);
+        //console.log('failed to connect to ' + proxy.ip);
+        //console.log(err);
         reject('failed to connect');
       } else {
+        //console.log('success')
         resolve(true);
         socket.on('error', function (err) {
           reject(err);
@@ -58,17 +60,13 @@ function createSocketConnection(ip, port, type, username, password) {
 });*/
 
 exports.test = function() {
-  console.log('Starting tests');
-  Proxy.find({ isDead: false }).exec().then(function (proxies) {
+  return Proxy.find({ isDead: false }).exec().then(function (proxies) {
     return reflectMap(proxies, function (proxy) {
       return createSocketConnection(proxy.ip, proxy.port, proxy.type).catch(function(err){
         //mark as dead.
         return Proxy.update({ _id: proxy._id}, { $set: { isDead: true }}).exec();
       });
-    });
-  }).then(function(data){
-    res.send(200);
+    }, 10);
   });
-
-}
+};
 

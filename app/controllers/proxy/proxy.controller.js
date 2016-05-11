@@ -3,6 +3,8 @@ var request = require('request');
 var _ = require('lodash');
 var Bluebird = require('bluebird');
 var config = require('../../../config/config');
+var ProxyTest = require('./test.controller');
+
 
 function massInsert(data){
   return new Bluebird(function(resolve, reject) {
@@ -52,6 +54,8 @@ exports.refreshProxies = function(req, res){
         }
       });
     });*/
+  }).then(function() {
+    return ProxyTest.test();
   }).then(function(){
     res.send(200);
   }).catch(function(err){
