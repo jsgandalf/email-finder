@@ -86,11 +86,10 @@ function createSocketConnection(domain, proxy, mxRecordIp, emailToVerify, retry)
          console.log(err);
         if (retry < 10) {
           console.log('retry: ',retry);
-          resolve({emailToVerify: emailToVerify, mxRecordIp:mxRecordIp, retry: retry + 1, proxy: proxy });
+          reject({emailToVerify: emailToVerify, mxRecordIp:mxRecordIp, retry: retry + 1, proxy: proxy });
         } else {
-          reject(false);
+          resolve(false);
         }
-        reject(false);
       } else {
         console.log('writing Helo');
         socket.write('HELO '+ domain + '\r\n');
@@ -102,10 +101,14 @@ function createSocketConnection(domain, proxy, mxRecordIp, emailToVerify, retry)
           data = data.toString("utf-8");
           responseData += data;
           console.log(data);
+          //If it is clogged you will get 450 4.2.1  https://support.google.com/mail/answer/6592 6si12648809pfe.172 - gsmtp
+          if(responseData.match(/450 4.2.1/i) != null && responseData.match(/221/i) != null && responseData.match(/250/i) != null && responseData.match(/220/i) != null){
+            resolve(emailToVerify);
+          }
           //If proxy is blocked -- select another one.
-          if(responseData.match(/554(\s|\-)/i) != null && responseData.match(/220/i) != null){
+          else if(responseData.match(/554(\s|\-)/i) != null && responseData.match(/220/i) != null){
             console.log('Spam IP trying to verify: ', emailToVerify)
-            resolve({emailToVerify: emailToVerify, mxRecordIp:mxRecordIp, retry: retry + 1, proxy: undefined });
+            reject({emailToVerify: emailToVerify, mxRecordIp:mxRecordIp, retry: retry + 1, proxy: undefined });
             //console.log('destroy socket');
             socket.destroy();
           }else if (responseData.match(/5[0-9][0-9](\s|\-)/i) != null && responseData.match(/221/i) != null) {
@@ -113,12 +116,12 @@ function createSocketConnection(domain, proxy, mxRecordIp, emailToVerify, retry)
             /*console.log(emailToVerify)
             console.log(responseData)*/
             socket.destroy();
-            reject(false);
+            resolve(false);
           } else if (responseData.match(/221/i) != null && responseData.match(/250/i) != null && responseData.match(/220/i) != null) {
             socket.destroy();
             console.log("Verified: " + emailToVerify);
             //console.log(responseData)
-            resolve({emailToVerify: emailToVerify, retry: 0});
+            resolve(emailToVerify);
           }
         });
         socket.on('close', function () {
@@ -155,17 +158,9 @@ function verifyEmail(domain, mxRecordIp, emailToVerify, retry, oldProxy){
     }
     proxy = proxy[0];
     return createSocketConnection(domain, proxy, mxRecordIp, emailToVerify, retry)
-      .then(function(data){
-        if(!data) {
-          return false; //a verified 5** response from the SMTP server
-        } else if(data.retry != 0) {
-          return verifyEmail(domain, data.mxRecordIp, data.emailToVerify, data.retry, data.proxy); //Retry up to 10 times with available proxies.
-        } else {
-          return data.emailToVerify;
-        }
-      }).catch(function(err){
-        console.log(err);
-        return false;
+      .catch(function(data){
+        console.log(data);
+        return verifyEmail(domain, data.mxRecordIp, data.emailToVerify, data.retry, data.proxy); //Retry up to 10 times with available proxies.
       });
   });
 }
@@ -237,7 +232,7 @@ exports.index = function(req, res) {
       });
     }
   }).then(function(results) {
-    var verifiedEmails = [];
+    var verifiedEmails = results;
     /*if (results.length > 0) {
       results.forEach(function (result) {
         if (result.state == "fulfilled") {
