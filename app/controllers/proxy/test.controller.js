@@ -66,7 +66,7 @@ exports.test = function() {
         //mark as dead.
         return Proxy.update({ _id: proxy._id}, { $set: { isDead: true }}).exec();
       });
-    }, 10);
+    }, 1);
   });
 };
 
