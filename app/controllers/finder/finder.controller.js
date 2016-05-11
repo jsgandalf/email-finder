@@ -4,8 +4,6 @@ var dns = require('dns');
 var _ = require('lodash');
 var net = require('net');
 var emailAccounts = require('../../../config/emailAccounts');
-var proxies = require('../../../config/proxies');
-var premiumPublicProxies = require('../../../config/premiumPublicProxies');
 var request = require('request');
 var Socks = require('socks');
 var GoogleCtrl = require('./google.controller');
@@ -293,37 +291,6 @@ exports.index = function(req, res) {
     console.log(err);
     return res.json({"response":{"error":"No email found"}});
   });
-};
-
-var myProxy = require('../../models/proxy');
-
-function massInsert(data) {
-  return new Bluebird(function(resolve, reject) {
-    myProxy.collection.insert(data, { ordered: false }, function(err, info) {
-      if(err) {
-        reject(err);
-      } else {
-        resolve(true);
-      }
-    });
-  })
-}
-
-exports.insertProxies = function(){
-  var privateProxies = require('../../../config/proxies');
-  var newprox = _.map(privateProxies, function(data){
-    return {
-      ip: data.ip,
-      port: data.port,
-      type: 5,
-      rnd: Math.random(),
-      created: new Date(),
-      isDead: false,
-      private: true
-    }
-  });
-
-  massInsert(newprox);
 };
 
 function reflectMap(collection, fn) {

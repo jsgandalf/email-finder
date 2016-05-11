@@ -1,18 +1,42 @@
-var Bluebird = require('bluebird');
-var Q = require('q');
-var dns = require('dns');
-var _ = require('lodash');
-var net = require('net');
-var emailAccounts = require('../../../config/emailAccounts');
-var proxies = require('../../../config/proxies');
-var premiumPublicProxies = require('../../../config/premiumPublicProxies');
-var request = require('request');
-var Socks = require('socks');
-var GoogleCtrl = require('./google.controller');
 var Proxy = require('../../models/proxy');
-var emailController = require('../email/email.controller');
-var config = require('../../../config/config');
-var moment = require('moment');
+var PrivateProxy = require('../../models/privateProxies');
+var privateProxies = require('../../../config/privateProxies');
+var _ = require('lodash');
+var Bluebird = require('bluebird');
+
+function massInsert(data) {
+  console.log('inserting')
+  return new Bluebird(function(resolve, reject) {
+    PrivateProxy.collection.insert(data, { ordered: false }, function(err, info) {
+      if(err) {
+        reject(err);
+      } else {
+        resolve(true);
+      }
+    });
+  })
+}
+
+exports.insertProxies = function(req, res){
+  var newprox = _.map(privateProxies, function(data){
+    return {
+      ip: data,
+      port: 18280,
+      type: 5,
+      rnd: Math.random(),
+      created: new Date(),
+      isDead: false,
+      provider: 'ovh'
+    }
+  });
+
+  massInsert(newprox).then(function(data){
+    return res.send(200);
+  }, function(err){
+    console.log(err);
+    res.send(500);
+  });
+};
 
 exports.removeOldProxies = function(req, res){
   var today = new Date();
@@ -23,3 +47,4 @@ exports.removeOldProxies = function(req, res){
     return res.send(500);
   });
 };
+

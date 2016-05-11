@@ -40,7 +40,9 @@ var all = {
   companyPhone: '(425) 633-6351', //Current phone number in emails and other places.
   systemEmail: 'messagesumo@gmail.com',
   developerEmail: 'sean@messagesumo.com',
-  apiKey: 'UZE6pY5Yz6z3ektV:NEgYhceNtJaee3ga:H5TYvG57F2dzJF7G'
+  apiKey: 'UZE6pY5Yz6z3ektV:NEgYhceNtJaee3ga:H5TYvG57F2dzJF7G',
+  privateProxyUsername: "s5",
+  privateProxyPassword: "aukiej5ish"
 };
 
 module.exports = _.assign(config[env], all);
