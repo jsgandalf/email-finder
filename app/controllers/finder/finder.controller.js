@@ -8,6 +8,8 @@ var request = require('request');
 var Socks = require('socks');
 var GoogleCtrl = require('./google.controller');
 var Proxy = require('../../models/proxy');
+var PrivateProxy = require('../../models/privateProxies');
+var Lead = require('../../models/lead.model');
 var emailController = require('../email/email.controller');
 var config = require('../../../config/config');
 var moment = require('moment');
@@ -20,6 +22,10 @@ function randomStr(m) {
 };
 
 function purifyName(str){
+  var match = str.match(/^\S+/g);
+  if(match != null && match.length > 0 && match[0] != null){
+    str = match[0];
+  }
   return str.replace(/[^\w\s]/gi, '')
 }
 
@@ -84,7 +90,7 @@ function createSocketConnection(domain, proxy, mxRecordIp, emailToVerify, retry)
       if (err) {
          //console.log('failed to connect');
          console.log(err);
-        if (retry < 10) {
+        if (retry < 3) {
           console.log('retry: ',retry);
           reject({emailToVerify: emailToVerify, mxRecordIp:mxRecordIp, retry: retry + 1, proxy: proxy });
         } else {
@@ -151,7 +157,7 @@ function verifyEmail(domain, mxRecordIp, emailToVerify, retry, oldProxy){
   }
 
   return updatePromise.then(function() {
-    return Proxy.find({ isDead: false, rnd: {$gte: Math.random()} }).sort({rnd:1}).limit(1).exec();
+    return PrivateProxy.find({ isDead: false, rnd: {$gte: Math.random()} }).sort({rnd:1}).limit(1).exec();
   }).then(function(proxy) {
     if (proxy.length == 0 || proxy == null || typeof proxy == 'undefined') {
       return emailController.sendMessage('Problem on Messagesumo Checker', 'You have run out of available proxies on email checker. Check your database or increase with your proxy provider plan!  This is very bad... This means you need to get a developer looking at the messagesumo-email checker app ASAP, no questions asked.');
@@ -168,7 +174,21 @@ function verifyEmail(domain, mxRecordIp, emailToVerify, retry, oldProxy){
 
 // Get list of accounts
 exports.index = function(req, res) {
-  var domain, firstName, lastName;
+  var domain,
+    firstName,
+    lastName,
+    patterns = [
+    '{f}{last}'/*,
+    '{last}',
+    '{first}',
+    '{f}{f2}{last}',
+    '{first}{l}',
+    '{first}.{last}',
+    '{first}{last}',
+    '{f}{l}',
+    '{first}_{last}',
+    '{first}-{last}'*/
+  ];
 
   domain = req.query.domain;
   firstName = purifyName(req.query.first);
@@ -184,101 +204,100 @@ exports.index = function(req, res) {
 
   promise.then(function(data) {
     domain = purifyDomain(data.toLowerCase());
-    //console.log(domain);
-    return Bluebird.promisify(dns.resolveMx)(domain);
-  }).then(function (mxServers) {
-    //console.log(mxServers);
-    if(typeof mxServers == 'undefined' || mxServers.length < 1){
-      return res.json({"response":{"error":"No email found"}});
-    }
-    var sorted = _.sortBy(mxServers, 'priority');
-    if(sorted.length > 0 && typeof sorted[0] == 'undefined'){
-      return res.json({err: 'Could not find email'});
-    }else{
-      return Bluebird.promisify(dns.resolve4)(sorted[0].exchange);
-    }
-  }).then(function(data) {
-    //console.log(data);
-    if(typeof data == 'undefined'){
-      return res.json({"response":{"error":"No email found"}});
-    }else{
-
-      var mxRecordIp = data[0];
-
-      //{"response":{"profile":{},"domain":"healthgrades.com","last":"Cotten","email":"ncotten@healthgrades.com","first":"Nancy","confidence":9,"response":["ncotten@healthgrades.com"]}}
-
-      var patterns = [
-        '{f}{last}',
-        '{last}'
-        /*'{f}{f2}{last}',
-        '{first}',
-        '{first}{l}',
-        '{first}.{last}',
-        '{first}{last}',
-        '{f}{l}',
-        '{first}_{last}',
-        '{first}-{last}'*/
-      ];
-
-      return reflectMap(patterns, function(pattern) {
-        var emailPattern = pattern
-          .replace('{first}', firstName)
-          .replace('{last}', lastName)
-          .replace('{f}', firstName.charAt(0))
-          .replace('{f2}', firstName.charAt(1))
-          .replace('{l}', lastName.charAt(0));
-
-        return verifyEmail(domain, mxRecordIp, emailPattern.toLowerCase() + '@' + domain, 0, false);
-      });
-    }
-  }).then(function(results) {
-    var verifiedEmails = results;
-    /*if (results.length > 0) {
-      results.forEach(function (result) {
-        if (result.state == "fulfilled") {
-          verifiedEmails.push(result.value);
-        }
-      });
-    }*/
-    console.log('-------- all settled ---------');
-    console.log(verifiedEmails);
-    var emails = _.filter(verifiedEmails, function(email){
-      return email;
-    }).map(function(email){
-      return email.toLowerCase();
-    });
-    if(emails.length > 0) {
+    return Lead.findOne({firstName: firstName, lastName: lastName, domain: domain}).exec();
+  }).then(function(lead) {
+    if (typeof lead != 'undefined' && lead != null && moment(lead.created).isAfter(moment().subtract(4, 'months'))) {
       return res.json({
         "response": {
           "profile": {},
           "domain": domain,
           "last": lastName,
-          "email": emails[0],
+          "email": lead.email,
           "first": firstName,
           "confidence": 100,
-          "response": emails
+          created: lead.created
         }
       });
     }else{
-      //Could not find email at all: going to guess blind guess:
-     var guessEmail = '{f}{last}'
-        .replace('{last}', lastName)
-        .replace('{f}', firstName.charAt(0));
-      return res.json({
-        "response": {
-          "profile": {},
-          "domain": domain,
-          "last": lastName,
-          "email": guessEmail.toLowerCase() + '@' + domain,
-          "first": firstName,
-          "confidence": (Math.floor(Math.random() * 9) + 1),
-          "response": [guessEmail.toLowerCase() + '@' + domain]
+      return Bluebird.promisify(dns.resolveMx)(domain).then(function (mxServers) {
+
+        if (typeof mxServers == 'undefined' || mxServers.length < 1) {
+          return res.json({"response": {"error": "No email found"}});
         }
-      });
+        var sorted = _.sortBy(mxServers, 'priority');
+        if (sorted.length > 0 && typeof sorted[0] == 'undefined') {
+          return res.json({err: 'Could not find email'});
+        } else {
+          return Bluebird.promisify(dns.resolve4)(sorted[0].exchange);
+        }
+      }).then(function (data) {
+        //console.log(data);
+        if (typeof data == 'undefined') {
+          return res.json({"response": {"error": "No email found"}});
+        } else {
+
+          var mxRecordIp = data[0];
+
+          //{"response":{"profile":{},"domain":"healthgrades.com","last":"Cotten","email":"ncotten@healthgrades.com","first":"Nancy","confidence":9,"response":["ncotten@healthgrades.com"]}}
+
+          return reflectMap(patterns, function (pattern) {
+            var emailPattern = pattern
+              .replace('{first}', firstName)
+              .replace('{last}', lastName)
+              .replace('{f}', firstName.charAt(0))
+              .replace('{f2}', firstName.charAt(1))
+              .replace('{l}', lastName.charAt(0));
+
+            return verifyEmail(domain, mxRecordIp, emailPattern.toLowerCase() + '@' + domain, 0, false);
+          });
+        }
+      }).then(function (verifiedEmails) {
+        console.log('-------- all settled ---------');
+        console.log(verifiedEmails);
+        var emails = _.filter(verifiedEmails, function (email) {
+          return email;
+        }).map(function (email) {
+          return email.toLowerCase();
+        });
+        var guessEmail = '{f}{last}'
+          .replace('{last}', lastName)
+          .replace('{f}', firstName.charAt(0));
+        var confidence = Math.floor(Math.random() * 7) + 1;
+        var email = guessEmail.toLowerCase() + '@' + domain;
+
+        if (emails.length > 0) {
+          email = emails[0];
+          confidence = 20/emails.length + 80;
+        }
+        if(emails.length < 1) {
+          emails = [guessEmail.toLowerCase() + '@' + domain];
+        }
+
+        var result = {
+          firstName: firstName,
+          lastName: lastName,
+          domain: domain,
+          email: email,
+          confidence: confidence,
+          response: emails,
+          created: new Date()
+        };
+
+        var catchAll = false;
+        if(emails.length == patterns.length) {
+          result.catchAll = true;
+          catchAll = true;
+        }
+
+        return Lead.create(result).then(function() {
+          result.catchAll = catchAll;
+          return res.json(result);
+        });
+      })
     }
   }).catch(function (err) {
     console.log(err);
-    return res.json({"response":{"error":"No email found"}});
+    return res.json({"error": "No email found"});
   });
 };
 
