@@ -1,10 +1,17 @@
 var google = require('../../google/google');
 var Bluebird = require('bluebird');
-
+var _ = require('lodash');
 //var emailAccounts = require('../../config/emailAccounts');
 var emailAccounts = require('../../../config/emailAccounts');
 
-google.resultsPerPage = 1;
+google.resultsPerPage = 10;
+
+function findHref(links){
+  links = _.filter(links, function(link) {
+   return link.href != null
+  });
+  return links[0].href;
+}
 
 function findCompanyWebsite(companyName) {
   var deferred = Bluebird.pending();
@@ -18,9 +25,16 @@ function findCompanyWebsite(companyName) {
   google(username, password, ip, port, companyName, function (err, res) {
     if (err)
       deferred.reject(err);
-    else
-      deferred.resolve(res.links[0].href);
-  })
+    else{
+      console.log(res.links)
+      var href = res.links[0].href;
+      if(href == null){
+        href = findHref(res.links);
+      }
+      console.log(href);
+      deferred.resolve(href);
+    }
+  });
   return deferred.promise;
 }
 

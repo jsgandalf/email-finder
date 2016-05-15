@@ -29,12 +29,31 @@ function purifyName(str){
   return str.replace(/[^\w\s]/gi, '')
 }
 
-function purifyDomain(domain){
-  domain = domain.replace('https://', '');
+function purifyDomain(url) {
+  var domain;
+  //find & remove protocol (http, ftp, etc.) and get domain
+  if (url.indexOf("://") > -1) {
+    domain = url.split('/')[2];
+  }
+  else {
+    domain = url.split('/')[0];
+  }
+
+  //find & remove port number
+  domain = domain.split(':')[0];
+
+  return purifyDomain2(domain);
+}
+
+function purifyDomain2(domain){
+  var parts = domain.split('.');
+  var subdomain = parts.shift();
+  return parts.join('.');
+  /*domain = domain.replace('https://', '');
   domain = domain.replace('http://', '').replace('www.', '');
-  /*if(domain == 'google.com'){
+  /!*if(domain == 'google.com'){
     domain = 'gmail.com';
-  }*/
+  }*!/
   if(domain.indexOf('.com') != -1){
     domain = domain.substring(0, domain.indexOf('.com') + 4);
   }else if(domain.indexOf('.net') != -1){
@@ -48,7 +67,7 @@ function purifyDomain(domain){
   }else if(domain.indexOf('.info') != -1){
     domain = domain.substring(0, domain.indexOf('.info') + 5);
   }
-  return domain;
+  return domain;*/
 }
 
 function createSocketConnection(domain, proxy, mxRecordIp, emailToVerify, retry){
@@ -112,9 +131,10 @@ function createSocketConnection(domain, proxy, mxRecordIp, emailToVerify, retry)
             resolve(emailToVerify);
           }
           //If proxy is blocked -- select another one.
-          else if(responseData.match(/554(\s|\-)/i) != null && responseData.match(/220/i) != null){
+          else if(responseData.match(/554(\s|\-)/i) != null){
             console.log('Spam IP trying to verify: ', emailToVerify)
-            reject({emailToVerify: emailToVerify, mxRecordIp:mxRecordIp, retry: retry + 1, proxy: undefined });
+            //reject({emailToVerify: emailToVerify, mxRecordIp:mxRecordIp, retry: retry + 1, proxy: undefined });
+            resolve(false);
             //console.log('destroy socket');
             socket.destroy();
           }else if (responseData.match(/5[0-9][0-9](\s|\-)/i) != null && responseData.match(/221/i) != null) {
@@ -178,7 +198,7 @@ exports.index = function(req, res) {
     firstName,
     lastName,
     patterns = [
-    '{f}{last}'/*,
+    '{f}{last}',
     '{last}',
     '{first}',
     '{f}{f2}{last}',
@@ -187,13 +207,12 @@ exports.index = function(req, res) {
     '{first}{last}',
     '{f}{l}',
     '{first}_{last}',
-    '{first}-{last}'*/
+    '{first}-{last}'
   ];
 
-  domain = req.query.domain;
   firstName = purifyName(req.query.first);
   lastName = purifyName(req.query.last);
-  domain = purifyDomain(domain);
+  domain = purifyDomain(req.query.domain);
 
   var promise = new Bluebird(function(resolve){ resolve(domain)});
   //invoke a company lookup if this is not a url.
@@ -203,44 +222,41 @@ exports.index = function(req, res) {
   }
 
   promise.then(function(data) {
+    console.log(data);
     domain = purifyDomain(data.toLowerCase());
+    console.log(domain);
     return Lead.findOne({firstName: firstName, lastName: lastName, domain: domain}).exec();
   }).then(function(lead) {
-    if (typeof lead != 'undefined' && lead != null && moment(lead.created).isAfter(moment().subtract(4, 'months'))) {
-      return res.json({
-        "response": {
-          "profile": {},
-          "domain": domain,
-          "last": lastName,
-          "email": lead.email,
-          "first": firstName,
-          "confidence": 100,
-          created: lead.created
-        }
-      });
-    }else{
-      return Bluebird.promisify(dns.resolveMx)(domain).then(function (mxServers) {
-
+    if (typeof lead != 'undefined' && lead != null && moment(lead.created).isAfter(moment().subtract(3, 'months'))) {
+      console.log("Loading from cache");
+      return Q.when(lead);
+    } else {
+      var promise = Q.when(true);
+      if (typeof lead != 'undefined' && lead != null && moment(lead.created).isBefore(moment().subtract(3, 'months'))) {
+        //console.log('deleting cache and refreshing');
+        promise = Lead.remove({ _id: lead._id }).exec();
+      }
+      return promise.then(function() {
+        return Bluebird.promisify(dns.resolveMx)(domain);
+      }).then(function (mxServers) {
         if (typeof mxServers == 'undefined' || mxServers.length < 1) {
-          return res.json({"response": {"error": "No email found"}});
+          throw new Error('Could not find Domain location');
         }
         var sorted = _.sortBy(mxServers, 'priority');
         if (sorted.length > 0 && typeof sorted[0] == 'undefined') {
-          return res.json({err: 'Could not find email'});
+          throw new Error('Domain not found');
         } else {
           return Bluebird.promisify(dns.resolve4)(sorted[0].exchange);
         }
       }).then(function (data) {
         //console.log(data);
         if (typeof data == 'undefined') {
-          return res.json({"response": {"error": "No email found"}});
+          throw new Error('Domain not found');
         } else {
 
           var mxRecordIp = data[0];
 
-          //{"response":{"profile":{},"domain":"healthgrades.com","last":"Cotten","email":"ncotten@healthgrades.com","first":"Nancy","confidence":9,"response":["ncotten@healthgrades.com"]}}
-
-          return reflectMap(patterns, function (pattern) {
+          /*return reflectMap(patterns, function (pattern) {
             var emailPattern = pattern
               .replace('{first}', firstName)
               .replace('{last}', lastName)
@@ -249,7 +265,9 @@ exports.index = function(req, res) {
               .replace('{l}', lastName.charAt(0));
 
             return verifyEmail(domain, mxRecordIp, emailPattern.toLowerCase() + '@' + domain, 0, false);
-          });
+          });*/
+
+          return Q.when(['sean@gmail.com']);
         }
       }).then(function (verifiedEmails) {
         console.log('-------- all settled ---------');
@@ -289,12 +307,14 @@ exports.index = function(req, res) {
           catchAll = true;
         }
 
-        return Lead.create(result).then(function() {
-          result.catchAll = catchAll;
-          return res.json(result);
+        return Lead.create(result).then(function(myResult) {
+          myResult.catchAll = catchAll;
+          return myResult;
         });
       })
     }
+  }).then(function(lead) {
+    return res.json(lead);
   }).catch(function (err) {
     console.log(err);
     return res.json({"error": "No email found"});

@@ -29,7 +29,8 @@ google.lang = 'en'
 google.requestOptions = {}
 google.nextText = 'Next'
 
-var igoogle = function (user, password, host, port, query, start, callback) {
+var igoogle = function (user, password, host, port, query, start, callback, redirectUrl) {
+  console.log('starting igoogle');
   if (google.resultsPerPage > 100) google.resultsPerPage = 100 // Google won't allow greater than 100 anyway
   if (google.lang !== 'en' && google.nextText === 'Next') console.warn(nextTextErrorMsg)
 
@@ -39,6 +40,9 @@ var igoogle = function (user, password, host, port, query, start, callback) {
   }
 
   var newUrl = util.format(URL, google.tld, google.lang, querystring.escape(query), start, google.resultsPerPage)
+  if(typeof redirectUrl != 'undefined'){
+    newUrl = 'https://www.google.com' + redirectUrl;
+  }
   var requestOptions = {
     url: newUrl,
     method: 'GET'
@@ -50,8 +54,8 @@ var igoogle = function (user, password, host, port, query, start, callback) {
 
   //var proxyUrl = "http://" + user + ":" + password + "@" + host + ":" + port;
 
-  //var host = "37.58.52.8";
-  //var port =  "222";
+  host = "89.248.168.128";
+  port =  "10109";
 
   var proxyUrl = "http://" + host + ":" + port;
   console.log(proxyUrl);
@@ -61,9 +65,8 @@ var igoogle = function (user, password, host, port, query, start, callback) {
   requestOptions.proxy = proxyUrl;
   requestOptions.tunnel = true;
   requestOptions.headers = {
-    //'User-Agent': agent,
     "Cache-Control" : "no-cache",
-    'Proxy-Authorization': auth
+    //'Proxy-Authorization': auth
   };
 
   request(requestOptions, function (err, resp, body) {
@@ -78,35 +81,42 @@ var igoogle = function (user, password, host, port, query, start, callback) {
         body: body
       }
 
-      $(itemSel).each(function (i, elem) {
-        var linkElem = $(elem).find(linkSel)
-        var descElem = $(elem).find(descSel)
-        var item = {
-          title: $(linkElem).first().text(),
-          link: null,
-          description: null,
-          href: null
+      var redirect = $('span.spell + a').attr('href');
+      if(typeof redirect != 'undefined'){
+        //redirect = redirect.replace('/search?q=', '');
+        console.log(redirect)
+        igoogle(user, password, host, port, query, start, callback, redirect);
+      }else {
+
+        $(itemSel).each(function (i, elem) {
+          var linkElem = $(elem).find(linkSel)
+          var descElem = $(elem).find(descSel)
+          var item = {
+            title: $(linkElem).first().text(),
+            link: null,
+            description: null,
+            href: null
+          }
+          var qsObj = querystring.parse($(linkElem).attr('href'))
+
+          if (qsObj['/url?q']) {
+            item.link = qsObj['/url?q']
+            item.href = item.link
+          }
+
+          $(descElem).find('div').remove()
+          item.description = $(descElem).text()
+
+          res.links.push(item)
+        })
+
+        if ($(nextSel).last().text() === google.nextText) {
+          res.next = function () {
+            igoogle(query, start + google.resultsPerPage, callback)
+          }
         }
-        var qsObj = querystring.parse($(linkElem).attr('href'))
-
-        if (qsObj['/url?q']) {
-          item.link = qsObj['/url?q']
-          item.href = item.link
-        }
-
-        $(descElem).find('div').remove()
-        item.description = $(descElem).text()
-
-        res.links.push(item)
-      })
-
-      if ($(nextSel).last().text() === google.nextText) {
-        res.next = function () {
-          igoogle(query, start + google.resultsPerPage, callback)
-        }
+        callback(null, res)
       }
-
-      callback(null, res)
     } else {
       callback(new Error('Error on response' + (resp ? ' (' + resp.statusCode + ')' : '') + ':' + err + ' : ' + body), null, null)
     }

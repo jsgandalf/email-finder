@@ -1,6 +1,4 @@
-module.exports = [{"email":"penelopebuckland01@gmail.com","proxy":"149.56.163.9:18280:s5:aukiej5ish"}];
-
-  /*[{"email":"penelopebuckland01@gmail.com","proxy":"54.84.109.76:8083:Jess&@#$%:crow#8541"},
+module.exports = [{"email":"penelopebuckland01@gmail.com","proxy":"54.84.109.76:8083:Jess&@#$%:crow#8541"},
     {"email":"deirdreunderwood012@gmail.com","proxy":"54.149.134.149:8083:Jess&@#$%:crow#8541"},
     {"email":"oliviawilkins012@gmail.com","proxy":"54.149.164.14:8083:Jess&@#$%:crow#8541"},
     {"email":"felicityskinner012@gmail.com","proxy":"52.91.190.127:8083:Jess&@#$%:crow#8541"},
@@ -49,4 +47,4 @@ module.exports = [{"email":"penelopebuckland01@gmail.com","proxy":"149.56.163.9:
     {"email":"keithkimbrough0@gmail.com","proxy":"52.87.247.99:8083:Jess&@#$%:crow#8541"},
     {"email":"wilburhansen377@gmail.com","proxy":"52.90.3.255:8083:Jess&@#$%:crow#8541"},
     {"email":"williamlott325@gmail.com","proxy":"52.90.7.191:8083:Jess&@#$%:crow#8541"},
-    {"email":"gavingriffis49@gmail.com","proxy":"52.90.85.223:8083:Jess&@#$%:crow#8541"}];*/
+    {"email":"gavingriffis49@gmail.com","proxy":"52.90.85.223:8083:Jess&@#$%:crow#8541"}];
