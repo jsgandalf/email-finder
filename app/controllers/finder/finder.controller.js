@@ -31,9 +31,7 @@ function cleanFirst(str){
 }
 
 function cleanLast(str){
-  console.log(str)
   var match = str.split(' ');
-  console.log(match)
   if(match != null && match.length > 0 && match[0] != null && match[1] != null) {
     str = match[1];
   }
@@ -340,7 +338,7 @@ exports.index = function(req, res) {
         }
       }).then(function(data){
         var mxRecordIp = data[0];
-        /*return reflectMap(patterns, function (pattern) {
+        return reflectMap(patterns, function (pattern) {
           var emailPattern = pattern
             .replace('{first}', firstName)
             .replace('{last}', lastName)
@@ -349,7 +347,7 @@ exports.index = function(req, res) {
             .replace('{l}', lastName.charAt(0));
 
           return verifyEmail(domain, mxRecordIp, emailPattern.toLowerCase() + '@' + domain, 0, false);
-        });*/
+        });
       }).then(function (verifiedEmails) {
         console.log('-------- all settled ---------');
         console.log(verifiedEmails);

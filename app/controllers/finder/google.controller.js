@@ -8,7 +8,7 @@ google.resultsPerPage = 10;
 
 function findHref(links){
   links = _.filter(links, function(link) {
-    return link.href != null && link.href.match(/wikipedia/) == null;
+    return link.href != null && link.href.match(/wikipedia/) == null && link.href.match(/linkedin/) == null;
   });
   return links[0].href;
 }
