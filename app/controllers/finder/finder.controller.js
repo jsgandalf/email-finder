@@ -244,11 +244,11 @@ function verifyEmail(domain, mxRecordIp, emailToVerify, retry, oldProxy){
         scriptId: myId,
         scriptDate: new Date()
       }
-    }, {multi: false}).then(function(){
+    }, {multi: false}).sort({rnd:1}).then(function(){
       return PrivateProxy.find({ scriptId: myId }).exec();
   }).then(function(proxy) {
     if (proxy.length == 0 || proxy == null || typeof proxy == 'undefined') {
-      return emailController.sendMessage('Problem on Messagesumo Checker', 'You have run out of available proxies on email checker. Check your database or increase with your proxy provider plan!  This is very bad... This means you need to get a developer looking at the messagesumo-email checker app ASAP, no questions asked.');
+      return emailController.sendMessage('Problem on Messagesumo Checker', JSON.stringify(proxy)+ ' ---- '+  +'You have run out of available proxies on email checker. Check your database or increase with your proxy provider plan!  This is very bad... This means you need to get a developer looking at the messagesumo-email checker app ASAP, no questions asked.');
     }
     proxy = proxy[0];
     return createSocketConnection(domain, proxy, mxRecordIp, emailToVerify, retry)
