@@ -224,6 +224,7 @@ function unsetProxy(proxyId){
 function updateRandomProxy(myId){
   var date = new Date(); //Lock Error
   date.setMinutes(date.getMinutes() - 5);
+  console.log(date)
   return PrivateProxy.update({
     isDead: false,
     rnd: {$gte: Math.random()},
@@ -235,7 +236,13 @@ function updateRandomProxy(myId){
       scriptId: myId,
       scriptDate: new Date()
     }
-  }, {multi: false});
+  }, {multi: false}).then(function(data){
+    if(data.nModified != 1){
+      return Bluebird.delay(500).then(function(){ return updateRandomProxy(myId)});
+    }else {
+      return data;
+    }
+  });
 }
 
 function verifyEmail(domain, mxRecordIp, emailToVerify, retry, oldProxy){
@@ -244,11 +251,8 @@ function verifyEmail(domain, mxRecordIp, emailToVerify, retry, oldProxy){
     updatePromise = Proxy.update({ _id: oldProxy._id}, { $set: { isDead: true}}).exec();
   }*/
   var myId = uuid.v4();
-  return updateRandomProxy(myId).then(function(data){
-    if(data.nModified != 1){
-      return verifyEmail(domain, mxRecordIp, emailToVerify, retry, undefined);
-    }
-    return PrivateProxy.find({ scriptId: myId }).exec();
+  return updateRandomProxy(myId).then(function(){
+    return PrivateProxy.find({scriptId: myId}).exec();
   }).then(function(proxy) {
     if (proxy.length == 0 || proxy == null || typeof proxy == 'undefined') {
       return emailController.sendMessage('Problem on Messagesumo Checker', JSON.stringify(proxy)+ ' ---- '+  +'You have run out of available proxies on email checker. Check your database or increase with your proxy provider plan!  This is very bad... This means you need to get a developer looking at the messagesumo-email checker app ASAP, no questions asked.');
@@ -353,6 +357,7 @@ exports.index = function(req, res) {
       }).then(function (verifiedEmails) {
         console.log('-------- all settled ---------');
         console.log(verifiedEmails);
+        var saveLead = false;
         var emails = _.filter(verifiedEmails, function (email) {
           return typeof email == 'string';
         });
@@ -366,6 +371,7 @@ exports.index = function(req, res) {
         var email = guessEmail.toLowerCase() + '@' + domain;
 
         if (emails.length > 0) {
+          saveLead = true;
           email = emails[0];
           confidence = 20/emails.length + 80;
         }
@@ -389,10 +395,14 @@ exports.index = function(req, res) {
           catchAll = true;
         }
 
-        return Lead.create(result).then(function(myResult) {
-          myResult.catchAll = catchAll;
-          return myResult;
-        });
+        if (saveLead) {
+          return Lead.create(result).then(function (myResult) {
+            myResult.catchAll = catchAll;
+            return myResult;
+          });
+        } else {
+          return result;
+        }
       })
     }
   }).then(function(lead) {

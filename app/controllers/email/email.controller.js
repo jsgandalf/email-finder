@@ -117,14 +117,14 @@ exports.sendMessageDevelopment = function(subject, body) {
 
 exports.errorMessage = function(err, info) {
   var stack = '';
-  if(typeof err.stack != 'undefined' && err.stack != null ){
+  if(typeof err != 'undefined' && err != null && typeof err.stack != 'undefined' && err.stack != null){
     stack = err.stack;
   }
   var mandrill_client = new mandrill.Mandrill(config.mandrill);
   var html = "<p>Error on Message Sumo Email Checker app,</p><p>" + err +'<p>' + stack + '</p><p>info: '+ info + '</p>';
   var message = {
     "html": html,
-    "text": config.companyName + " failure: " + err + ' '+ err.stack,
+    "text": config.companyName + " failure: " + err + ' '+ stack,
     "subject": config.companyName + " email checker failure",
     "from_email": config.systemEmail,
     "from_name": config.companyName,
