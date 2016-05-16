@@ -221,18 +221,9 @@ function unsetProxy(proxyId){
   return deferred.promise;
 }
 
-function verifyEmail(domain, mxRecordIp, emailToVerify, retry, oldProxy){
-  console.log("trying to verify: " + emailToVerify)
-  var updatePromise = Q.when(false);
-  /*if(typeof oldProxy != 'undefined' && oldProxy != null && oldProxy){
-    updatePromise = Proxy.update({ _id: oldProxy._id}, { $set: { isDead: true}}).exec();
-  }*/
-
-  var myId = uuid.v4();
+function updateRandomProxy(myId){
   var date = new Date(); //Lock Error
   date.setMinutes(date.getMinutes() - 5);
-
- // return updatePromise.then(function() {
   return PrivateProxy.update({
     isDead: false,
     rnd: {$gte: Math.random()},
@@ -240,24 +231,35 @@ function verifyEmail(domain, mxRecordIp, emailToVerify, retry, oldProxy){
       {scriptId: {$exists: false}},
       {scriptDate: {$lt: date }}
     ] }, {
-      $set: {
-        scriptId: myId,
-        scriptDate: new Date()
-      }
-    }, {multi: false}).sort({rnd:1}).then(function(){
-      return PrivateProxy.find({ scriptId: myId }).exec();
+    $set: {
+      scriptId: myId,
+      scriptDate: new Date()
+    }
+  }, {multi: false});
+}
+
+function verifyEmail(domain, mxRecordIp, emailToVerify, retry, oldProxy){
+  console.log("trying to verify: " + emailToVerify)
+  /*if(typeof oldProxy != 'undefined' && oldProxy != null && oldProxy){
+    updatePromise = Proxy.update({ _id: oldProxy._id}, { $set: { isDead: true}}).exec();
+  }*/
+  var myId = uuid.v4();
+  return updateRandomProxy(myId).then(function(data){
+    if(data.nModified != 1){
+      return verifyEmail(domain, mxRecordIp, emailToVerify, retry, undefined);
+    }
+    return PrivateProxy.find({ scriptId: myId }).exec();
   }).then(function(proxy) {
     if (proxy.length == 0 || proxy == null || typeof proxy == 'undefined') {
       return emailController.sendMessage('Problem on Messagesumo Checker', JSON.stringify(proxy)+ ' ---- '+  +'You have run out of available proxies on email checker. Check your database or increase with your proxy provider plan!  This is very bad... This means you need to get a developer looking at the messagesumo-email checker app ASAP, no questions asked.');
     }
     proxy = proxy[0];
     return createSocketConnection(domain, proxy, mxRecordIp, emailToVerify, retry)
-      .then(function(data){
-        return unsetProxy(proxy._id).then(function(){
+      .then(function(data) {
+        return unsetProxy(proxy._id).then(function() {
           return data;
         });
       }).catch(function(data){
-        console.log(data);
         return verifyEmail(domain, data.mxRecordIp, data.emailToVerify, data.retry, data.proxy); //Retry up to 3 times with available proxies.
       });
   });
