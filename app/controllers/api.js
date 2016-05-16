@@ -10,12 +10,12 @@ module.exports = function (app) {
   app.use('/api', router);
 };
 
-router.get('/guess', auth.isAuthenticated(), FinderCtrl.index);
+router.get('/v1/guess', auth.isAuthenticated(), FinderCtrl.index);
 
-router.get('/insert', InsertCtrl.insertProxies);
+/*router.get('/insert', InsertCtrl.insertProxies);
 
 router.get('/clean', RemoveCtrl.removeOldProxies);
 
-router.get('/test', TestCtrl.test);
+router.get('/test', TestCtrl.test);*/
 
 /*router.get('/testPrivate', TestCtrl.testPrivate);*/
