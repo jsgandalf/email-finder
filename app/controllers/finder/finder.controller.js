@@ -163,7 +163,12 @@ function createSocketConnection(domain, proxy, mxRecordIp, emailToVerify, retry)
             //console.log('destroy socket');
             socket.destroy();
           }
-          else if(responseData.match(/\n554(\s|\-)/i) != null){
+          else if(responseData.match(/\n554(\s|\-)/i) != null && responseData.match(/554 5.7.1/)!= null){
+            resolve(false);
+            //console.log('destroy socket');
+            socket.destroy();
+          }
+          else if(responseData.match(/\n554(\s|\-)/i) != null && responseData.match(/554 5.7.1/)== null){
             console.log('Spam IP trying to verify: ', emailToVerify)
             emailController.errorMessage(err, data+ ' received a 554 message... either spam or sync error... beware and investiage: ' + emailToVerify + 'domain: '+domain+ 'proxy: '+JSON.stringify(proxy));
             //reject({emailToVerify: emailToVerify, mxRecordIp:mxRecordIp, retry: retry + 1, proxy: undefined });
