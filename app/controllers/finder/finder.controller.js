@@ -347,7 +347,7 @@ exports.index = function(req, res) {
             .replace('{l}', lastName.charAt(0));
 
           return verifyEmail(domain, mxRecordIp, emailPattern.toLowerCase() + '@' + domain, 0, false);
-        });
+        }, 2);
       }).then(function (verifiedEmails) {
         console.log('-------- all settled ---------');
         console.log(verifiedEmails);
