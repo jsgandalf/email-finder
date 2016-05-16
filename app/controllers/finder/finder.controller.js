@@ -360,7 +360,7 @@ exports.index = function(req, res) {
         var guessEmail = '{f}{last}'
           .replace('{last}', lastName)
           .replace('{f}', firstName.charAt(0));
-        var confidence = Math.floor(Math.random() * 7) + 1;
+        var confidence = (Math.floor(Math.random() * 7) + 1, 10);
         var email = guessEmail.toLowerCase() + '@' + domain;
 
         if (emails.length > 0) {
@@ -376,7 +376,7 @@ exports.index = function(req, res) {
           lastName: lastName,
           domain: domain,
           email: email,
-          confidence: confidence,
+          confidence: parseInt(confidence,10),
           response: emails,
           created: new Date()
         };
@@ -405,7 +405,7 @@ exports.index = function(req, res) {
       lastName: lastName,
       domain: domain,
       email: guessEmail.toLowerCase() + '@' + domain,
-      confidence: (Math.floor(Math.random() * 7)) + 1,
+      confidence: parseInt((Math.floor(Math.random() * 7)) + 1, 10),
       response: [guessEmail.toLowerCase() + '@' + domain],
       created: new Date(),
       catchAll: false
