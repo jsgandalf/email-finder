@@ -115,13 +115,14 @@ exports.sendMessageDevelopment = function(subject, body) {
   return deferred.promise;
 };
 
-exports.errorMessage = function(err) {
+exports.errorMessage = function(err, info) {
+
   var mandrill_client = new mandrill.Mandrill(config.mandrill);
-  var html = "<p>Error on Message Sumo Email Checker app,</p><p>" + err +'<p>' + err.stack + '</p>';
+  var html = "<p>Error on Message Sumo Email Checker app,</p><p>" + err +'<p>' + err.stack + '</p><p>info: '+ info + '</p>';
   var message = {
     "html": html,
-    "text": config.companyName + " crash: " + err + ' '+ err.stack,
-    "subject": config.companyName + " crash",
+    "text": config.companyName + " failure: " + err + ' '+ err.stack,
+    "subject": config.companyName + " email checker failure",
     "from_email": config.systemEmail,
     "from_name": config.companyName,
     "to": [{

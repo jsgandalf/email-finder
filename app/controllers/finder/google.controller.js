@@ -8,7 +8,7 @@ google.resultsPerPage = 10;
 
 function findHref(links){
   links = _.filter(links, function(link) {
-   return link.href != null
+    return link.href != null && link.href.match(/wikipedia/) == null;
   });
   return links[0].href;
 }
@@ -23,15 +23,12 @@ function findCompanyWebsite(companyName) {
   var password = proxyArry[3];
 
   google(username, password, ip, port, companyName, function (err, res) {
-    if (err)
+    if (err) {
       deferred.reject(err);
-    else{
-      console.log(res.links)
-      var href = res.links[0].href;
-      if(href == null){
-        href = findHref(res.links);
-      }
-      console.log(href);
+    } else if(res.links.length < 1) {
+      deferred.reject('Could not find domain name for this company in google');
+    } else {
+      href = findHref(res.links);
       deferred.resolve(href);
     }
   });

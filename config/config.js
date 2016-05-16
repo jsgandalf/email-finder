@@ -38,7 +38,7 @@ var all = {
   mandrill: "3lLRQYVspHTIUmce9sIbZg",
   companyName: 'Message Sumo',
   companyPhone: '(425) 633-6351', //Current phone number in emails and other places.
-  systemEmail: 'messagesumo@gmail.com',
+  systemEmail: 'support@messagesumo.com',
   developerEmail: 'sean@messagesumo.com',
   apiKey: 'UZE6pY5Yz6z3ektV:NEgYhceNtJaee3ga:H5TYvG57F2dzJF7G',
   privateProxyUsername: "s5",

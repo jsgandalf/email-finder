@@ -14,6 +14,7 @@ var emailController = require('../email/email.controller');
 var config = require('../../../config/config');
 var moment = require('moment');
 var reflectMap = require('../../utils/reflect-map');
+var uuid = require('node-uuid');
 
 function randomStr(m) {
   var m = m || 9; s = '', r = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz';
@@ -21,12 +22,26 @@ function randomStr(m) {
   return s;
 };
 
-function purifyName(str){
-  var match = str.match(/^\S+/g);
-  if(match != null && match.length > 0 && match[0] != null){
+function cleanFirst(str){
+  var match = str.split(' ');
+  if(match != null && match.length > 0 && match[0] != null && match[1] != null) {
     str = match[0];
   }
-  return str.replace(/[^\w\s]/gi, '')
+  return str;
+}
+
+function cleanLast(str){
+  console.log(str)
+  var match = str.split(' ');
+  console.log(match)
+  if(match != null && match.length > 0 && match[0] != null && match[1] != null) {
+    str = match[1];
+  }
+  return str;
+}
+
+function purifyName(str){
+  return (str.replace(/[^\w\s]/gi, '')).trim();
 }
 
 function purifyDomain(url) {
@@ -41,20 +56,19 @@ function purifyDomain(url) {
 
   //find & remove port number
   domain = domain.split(':')[0];
-
   return purifyDomain2(domain);
 }
 
 function purifyDomain2(domain){
-  var parts = domain.split('.');
-  var subdomain = parts.shift();
-  return parts.join('.');
-  /*domain = domain.replace('https://', '');
-  domain = domain.replace('http://', '').replace('www.', '');
-  /!*if(domain == 'google.com'){
-    domain = 'gmail.com';
-  }*!/
-  if(domain.indexOf('.com') != -1){
+  domain = domain.replace('https://', '');
+  domain = domain.replace('http://', '')
+  if(domain.match('www') != null) {
+    domain = domain.replace('www.', '');
+  }else if(domain.split('.').length > 2){
+    domain = domain.replace(/^[^.]+\./g, "");
+  }
+
+  /*if(domain.indexOf('.com') != -1){
     domain = domain.substring(0, domain.indexOf('.com') + 4);
   }else if(domain.indexOf('.net') != -1){
     domain = domain.substring(0, domain.indexOf('.net') + 4);
@@ -66,8 +80,8 @@ function purifyDomain2(domain){
     domain = domain.substring(0, domain.indexOf('.us') + 3);
   }else if(domain.indexOf('.info') != -1){
     domain = domain.substring(0, domain.indexOf('.info') + 5);
-  }
-  return domain;*/
+  }*/
+  return domain.trim();
 }
 
 function createSocketConnection(domain, proxy, mxRecordIp, emailToVerify, retry){
@@ -116,28 +130,49 @@ function createSocketConnection(domain, proxy, mxRecordIp, emailToVerify, retry)
           resolve(false);
         }
       } else {
-        console.log('writing Helo');
-        socket.write('HELO '+ domain + '\r\n');
-        socket.write("MAIL FROM: <" + emailAccount.email + ">\r\n");
+        var commands = 0;
+        //console.log('writing Helo');
+        socket.write('EHLO '+ domain + '\r\n');
+
         //socket.write("MAIL FROM: <johnsmith@gmail.com>\r\n");
-        socket.write("rcpt to:<" + emailToVerify + ">\r\n");
-        socket.write("QUIT\r\n");
+
         socket.on('data', function (data) {
           data = data.toString("utf-8");
           responseData += data;
           console.log(data);
+
+          if(responseData.match(/220/i) != null && commands === 0){
+            commands += 1;
+            socket.write("MAIL FROM: <" + emailAccount.email + ">\r\n");
+          }else if(responseData.match(/250/i) != null && commands > 0){
+            socket.write("rcpt to:<" + emailToVerify + ">\r\n");
+            socket.write("QUIT\r\n");
+          }
+          if(responseData.match(/450 4.2.1/i) != null || responseData.match(/\n5[0-9][0-9](\s|\-)/i) != null){
+            socket.write("QUIT\r\n");
+          }
+
+
           //If it is clogged you will get 450 4.2.1  https://support.google.com/mail/answer/6592 6si12648809pfe.172 - gsmtp
           if(responseData.match(/450 4.2.1/i) != null && responseData.match(/221/i) != null && responseData.match(/250/i) != null && responseData.match(/220/i) != null){
             resolve(emailToVerify);
           }
           //If proxy is blocked -- select another one.
-          else if(responseData.match(/554(\s|\-)/i) != null){
-            console.log('Spam IP trying to verify: ', emailToVerify)
+          else if(responseData.match(/\n503(\s|\-)/i) != null){
+            emailController.errorMessage(err, data+ ' received a 503 message... Client host rejected: Improper use of SMTP command pipelining... beware and investigate, maybe its because you are using ELHO instead of HELO?: ' + emailToVerify + 'domain: '+domain+ 'proxy: '+JSON.stringify(proxy));
             //reject({emailToVerify: emailToVerify, mxRecordIp:mxRecordIp, retry: retry + 1, proxy: undefined });
             resolve(false);
             //console.log('destroy socket');
             socket.destroy();
-          }else if (responseData.match(/5[0-9][0-9](\s|\-)/i) != null && responseData.match(/221/i) != null) {
+          }
+          else if(responseData.match(/\n554(\s|\-)/i) != null){
+            console.log('Spam IP trying to verify: ', emailToVerify)
+            emailController.errorMessage(err, data+ ' received a 554 message... either spam or sync error... beware and investiage: ' + emailToVerify + 'domain: '+domain+ 'proxy: '+JSON.stringify(proxy));
+            //reject({emailToVerify: emailToVerify, mxRecordIp:mxRecordIp, retry: retry + 1, proxy: undefined });
+            resolve(false);
+            //console.log('destroy socket');
+            socket.destroy();
+          }else if (responseData.match(/\n5[0-9][0-9](\s|\-)/i) != null && responseData.match(/221/i) != null) {
             console.log("Not a valid email: ",emailToVerify)
             /*console.log(emailToVerify)
             console.log(responseData)*/
@@ -169,25 +204,75 @@ function createSocketConnection(domain, proxy, mxRecordIp, emailToVerify, retry)
   });
 }
 
+function unsetProxy(proxyId){
+  var deferred = Q.defer();
+  PrivateProxy.update({
+    _id: proxyId
+  }, {
+    $unset: {
+      scriptId: "",
+      scriptDate: ""
+    }
+  }, {multi: false}, function(err, data) {
+    if(err) {
+      deferred.reject(err);
+    } else {
+      deferred.resolve(data);
+    }
+  });
+  return deferred.promise;
+}
+
 function verifyEmail(domain, mxRecordIp, emailToVerify, retry, oldProxy){
   console.log("trying to verify: " + emailToVerify)
   var updatePromise = Q.when(false);
-  if(typeof oldProxy != 'undefined' && oldProxy != null && oldProxy){
+  /*if(typeof oldProxy != 'undefined' && oldProxy != null && oldProxy){
     updatePromise = Proxy.update({ _id: oldProxy._id}, { $set: { isDead: true}}).exec();
-  }
+  }*/
 
-  return updatePromise.then(function() {
-    return PrivateProxy.find({ isDead: false, rnd: {$gte: Math.random()} }).sort({rnd:1}).limit(1).exec();
+  var myId = uuid.v4();
+  var date = new Date(); //Lock Error
+  date.setMinutes(date.getMinutes() - 5);
+
+ // return updatePromise.then(function() {
+  return PrivateProxy.update({
+    isDead: false,
+    rnd: {$gte: Math.random()},
+    $or: [
+      {scriptId: {$exists: false}},
+      {scriptDate: {$lt: date }}
+    ] }, {
+      $set: {
+        scriptId: myId,
+        scriptDate: new Date()
+      }
+    }, {multi: false}).then(function(){
+      return PrivateProxy.find({ scriptId: myId }).exec();
   }).then(function(proxy) {
     if (proxy.length == 0 || proxy == null || typeof proxy == 'undefined') {
       return emailController.sendMessage('Problem on Messagesumo Checker', 'You have run out of available proxies on email checker. Check your database or increase with your proxy provider plan!  This is very bad... This means you need to get a developer looking at the messagesumo-email checker app ASAP, no questions asked.');
     }
     proxy = proxy[0];
     return createSocketConnection(domain, proxy, mxRecordIp, emailToVerify, retry)
-      .catch(function(data){
+      .then(function(data){
+        return unsetProxy(proxy._id).then(function(){
+          return data;
+        });
+      }).catch(function(data){
         console.log(data);
-        return verifyEmail(domain, data.mxRecordIp, data.emailToVerify, data.retry, data.proxy); //Retry up to 10 times with available proxies.
+        return verifyEmail(domain, data.mxRecordIp, data.emailToVerify, data.retry, data.proxy); //Retry up to 3 times with available proxies.
       });
+  });
+}
+
+function getDns(sorted, retry){
+  return Bluebird.promisify(dns.resolve4)(sorted[retry].exchange).catch(function(){
+    retry += 1;
+    if(retry < sorted.length) {
+      return getDns(sorted, retry);
+    }else{
+      throw new Error('Could not find exchange servers');
+    }
   });
 }
 
@@ -210,8 +295,8 @@ exports.index = function(req, res) {
     '{first}-{last}'
   ];
 
-  firstName = purifyName(req.query.first);
-  lastName = purifyName(req.query.last);
+  firstName = cleanFirst(purifyName(req.query.first)).toLowerCase();
+  lastName = cleanLast(purifyName(req.query.last)).toLowerCase();
   domain = purifyDomain(req.query.domain);
 
   var promise = new Bluebird(function(resolve){ resolve(domain)});
@@ -222,7 +307,6 @@ exports.index = function(req, res) {
   }
 
   promise.then(function(data) {
-    console.log(data);
     domain = purifyDomain(data.toLowerCase());
     console.log(domain);
     return Lead.findOne({firstName: firstName, lastName: lastName, domain: domain}).exec();
@@ -246,35 +330,33 @@ exports.index = function(req, res) {
         if (sorted.length > 0 && typeof sorted[0] == 'undefined') {
           throw new Error('Domain not found');
         } else {
-          return Bluebird.promisify(dns.resolve4)(sorted[0].exchange);
+          return getDns(sorted, 0);
         }
       }).then(function (data) {
-        //console.log(data);
         if (typeof data == 'undefined') {
           throw new Error('Domain not found');
         } else {
-
-          var mxRecordIp = data[0];
-
-          /*return reflectMap(patterns, function (pattern) {
-            var emailPattern = pattern
-              .replace('{first}', firstName)
-              .replace('{last}', lastName)
-              .replace('{f}', firstName.charAt(0))
-              .replace('{f2}', firstName.charAt(1))
-              .replace('{l}', lastName.charAt(0));
-
-            return verifyEmail(domain, mxRecordIp, emailPattern.toLowerCase() + '@' + domain, 0, false);
-          });*/
-
-          return Q.when(['sean@gmail.com']);
+          return data
         }
+      }).then(function(data){
+        var mxRecordIp = data[0];
+        /*return reflectMap(patterns, function (pattern) {
+          var emailPattern = pattern
+            .replace('{first}', firstName)
+            .replace('{last}', lastName)
+            .replace('{f}', firstName.charAt(0))
+            .replace('{f2}', firstName.charAt(1))
+            .replace('{l}', lastName.charAt(0));
+
+          return verifyEmail(domain, mxRecordIp, emailPattern.toLowerCase() + '@' + domain, 0, false);
+        });*/
       }).then(function (verifiedEmails) {
         console.log('-------- all settled ---------');
         console.log(verifiedEmails);
         var emails = _.filter(verifiedEmails, function (email) {
-          return email;
-        }).map(function (email) {
+          return typeof email == 'string';
+        });
+        emails = _.map(emails, function (email) {
           return email.toLowerCase();
         });
         var guessEmail = '{f}{last}'
@@ -316,8 +398,28 @@ exports.index = function(req, res) {
   }).then(function(lead) {
     return res.json(lead);
   }).catch(function (err) {
-    console.log(err);
-    return res.json({"error": "No email found"});
+    var guessEmail = '{f}{last}'
+      .replace('{last}', lastName)
+      .replace('{f}', firstName.charAt(0));
+
+    var result = {
+      firstName: firstName,
+      lastName: lastName,
+      domain: domain,
+      email: guessEmail.toLowerCase() + '@' + domain,
+      confidence: (Math.floor(Math.random() * 7)) + 1,
+      response: [guessEmail.toLowerCase() + '@' + domain],
+      created: new Date(),
+      catchAll: false
+    };
+
+    if(err == 'Could not find domain name for this company in google'){
+      res.status(500).json({ error: 'Could not find email'})
+    }else{
+      res.status(200).json(result);
+    }
+    emailController.errorMessage(err, JSON.stringify(result));
+    //not good input... this means we couldn't verify the exchange records or mail records...
   });
 };
 

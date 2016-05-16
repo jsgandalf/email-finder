@@ -30,7 +30,6 @@ google.requestOptions = {}
 google.nextText = 'Next'
 
 var igoogle = function (user, password, host, port, query, start, callback, redirectUrl) {
-  console.log('starting igoogle');
   if (google.resultsPerPage > 100) google.resultsPerPage = 100 // Google won't allow greater than 100 anyway
   if (google.lang !== 'en' && google.nextText === 'Next') console.warn(nextTextErrorMsg)
 
@@ -54,11 +53,12 @@ var igoogle = function (user, password, host, port, query, start, callback, redi
 
   //var proxyUrl = "http://" + user + ":" + password + "@" + host + ":" + port;
 
-  host = "89.248.168.128";
-  port =  "10109";
-
+  /*host = "23.106.208.186";
+  port =  "29842";
+  user =  "sthoma";
+  password = "TnVDp4Zy";*/
   var proxyUrl = "http://" + host + ":" + port;
-  console.log(proxyUrl);
+  //console.log(proxyUrl);
 
   var proxiedRequest = request.defaults({'proxy': proxyUrl});
   var auth = 'Basic ' + new Buffer(user + ':' + password).toString('base64');
@@ -66,7 +66,7 @@ var igoogle = function (user, password, host, port, query, start, callback, redi
   requestOptions.tunnel = true;
   requestOptions.headers = {
     "Cache-Control" : "no-cache",
-    //'Proxy-Authorization': auth
+    'Proxy-Authorization': auth
   };
 
   request(requestOptions, function (err, resp, body) {
@@ -84,7 +84,6 @@ var igoogle = function (user, password, host, port, query, start, callback, redi
       var redirect = $('span.spell + a').attr('href');
       if(typeof redirect != 'undefined'){
         //redirect = redirect.replace('/search?q=', '');
-        console.log(redirect)
         igoogle(user, password, host, port, query, start, callback, redirect);
       }else {
 

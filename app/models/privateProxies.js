@@ -12,7 +12,9 @@ var PrivateProxySchema = new Schema({
   created: {type: Date, default: Date.now() },
   password: String,
   username: String,
-  provider: String //example ovh, bluehost, godaddy
+  provider: String, //example ovh, bluehost, godaddy
+  scriptId: String,
+  scriptDate: Date
 });
 
 

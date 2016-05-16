@@ -26,7 +26,8 @@
     "mandrill-api": "~1.0.x",
     "composable-middleware": "^0.3.0",
     "moment": "~2.10.6",
-    "socks5-http-client": "1.0.2"
+    "socks5-http-client": "1.0.2",
+    "node-uuid": "^1.4.7"
   },
   "devDependencies": {
     "gulp": "^3.9.0",
