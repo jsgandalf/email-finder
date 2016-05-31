@@ -11,6 +11,7 @@ function getRandomInt(min, max) {
 }
 
 function createSocketConnection(ip, port, type, username, password) {
+  console.log('entering promise')
   return new Promise(function (resolve, reject) {
     type = type || 5;
     var proxy = {
@@ -82,14 +83,22 @@ exports.test = function() {
   });
 };
 
+return createSocketConnection('37.58.52.8', '222', 5, 'st362', 'vikings123!@#').catch(function(err){
+  console.log(err);
+});
+
+
 exports.testPrivate = function() {
-  return PrivateProxy.find({ isDead: false }).exec().then(function (proxies) {
+  return createSocketConnection('37.58.52.8', '222', 5, 'st362', 'vikings123!@#').catch(function(err){
+    console.log(err);
+  });
+  /*return PrivateProxy.find({ isDead: false }).exec().then(function (proxies) {
     return reflectMap(proxies, function (proxy) {
       return createSocketConnection(proxy.ip, proxy.port, 5, config.privateProxyUsername, config.privateProxyPassword).catch(function(err){
         //mark as dead.
         return PrivateProxy.update({ _id: proxy._id}, { $set: { isDead: true }}).exec();
       });
     }, 1);
-  });
+  });*/
 };
 

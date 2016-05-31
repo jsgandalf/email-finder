@@ -168,7 +168,10 @@ function createSocketConnection(domain, proxy, mxRecordIp, emailToVerify, retry)
             //console.log('destroy socket');
             socket.destroy();
           }
-          else if(responseData.match(/\n554(\s|\-)/i) != null && responseData.match(/554 5.7.1/)== null){
+          else if(responseData.match(/spamhaus/i) != null) {
+            emailController.errorMessage(err, data+ ' Spmahaus violation!!! Watch out!!!: ' + emailToVerify + 'domain: '+domain+ 'proxy: '+JSON.stringify(proxy));
+            reject({emailToVerify: emailToVerify, mxRecordIp:mxRecordIp, retry: retry + 1, proxy: undefined });
+          }else if(responseData.match(/\n554(\s|\-)/i) != null && responseData.match(/554 5.7.1/)== null){
             console.log('Spam IP trying to verify: ', emailToVerify)
             emailController.errorMessage(err, data+ ' received a 554 message... either spam or sync error... beware and investiage: ' + emailToVerify + 'domain: '+domain+ 'proxy: '+JSON.stringify(proxy));
             //reject({emailToVerify: emailToVerify, mxRecordIp:mxRecordIp, retry: retry + 1, proxy: undefined });
@@ -189,6 +192,7 @@ function createSocketConnection(domain, proxy, mxRecordIp, emailToVerify, retry)
           }
         });
         socket.on('close', function () {
+          socket.destroy();
           //console.log('Client disconnected from proxy');
         });
 
@@ -228,7 +232,8 @@ function unsetProxy(proxyId){
 
 function updateRandomProxy(myId){
   var date = new Date(); //Lock Error
-  date.setMinutes(date.getMinutes() - 5);
+  //date.setMinutes(date.getHours() - 48);
+  date.setMinutes(date.getHours() - 1);
   console.log(date)
   return PrivateProxy.update({
     isDead: false,
@@ -252,9 +257,9 @@ function updateRandomProxy(myId){
 
 function verifyEmail(domain, mxRecordIp, emailToVerify, retry, oldProxy){
   console.log("trying to verify: " + emailToVerify)
-  /*if(typeof oldProxy != 'undefined' && oldProxy != null && oldProxy){
+  if(typeof oldProxy != 'undefined' && oldProxy != null && oldProxy){
     updatePromise = Proxy.update({ _id: oldProxy._id}, { $set: { isDead: true}}).exec();
-  }*/
+  }
   var myId = uuid.v4();
   return updateRandomProxy(myId).then(function(){
     return PrivateProxy.find({scriptId: myId}).exec();
@@ -413,6 +418,7 @@ exports.index = function(req, res) {
   }).then(function(lead) {
     return res.json(lead);
   }).catch(function (err) {
+    console.log(err);
     var guessEmail = '{f}{last}'
       .replace('{last}', lastName)
       .replace('{f}', firstName.charAt(0));
@@ -432,6 +438,9 @@ exports.index = function(req, res) {
       res.status(500).json({ error: 'Could not find email'})
     }else{
       res.status(200).json(result);
+    }
+    if(typeof err != 'undefined' && err != null && err.code == 'ENODATA'){
+      console.log('got here!!')
     }
     emailController.errorMessage(err, JSON.stringify(result));
     //not good input... this means we couldn't verify the exchange records or mail records...

@@ -1,28 +1,21 @@
-function minDelay(promise, delay) {
-  Bluebird.all([promise, Bluebird.delay(delay)]).get(0);
-}
-
-function setDelay(fn, interval){
-  var deferred = Q.defer();
-  setTimeout(function(){ deferred.resolve(fn) }, interval);
-  return deferred.promise;
-}
+var _ = require('lodash');
+var Q = require('q');
+var Bluebird = require('bluebird');
 
 function reflectMapWait(collection, fn) {
-  var promises = _.map(collection, function(val){
-    return setDelay(fn(val), 1000);
-  });
-  console.log(promises)
-  return promises;
-  /*return _.map(collection, function(val) {
-   return minDelay(fn(val), 1000)
-   });*/
+  Bluebird.map(collection, function(item, i) { return Bluebird.delay(i * 1000).then(function() { return foo(item); }); });
 }
 
+function foo(){
+  console.log('doing');
+  var defer = Q.defer();
+  setTimeout(function(){ defer.resolve(true)}, 10000);
+  return defer.promise;
+}
 
-var coll = [1,2,3,4,5,6,6,7,8,9,10,11,12]
+var coll = [1,2,3,4,5]
 
-reflectMap.reflectMapWait(coll,function(data){
+reflectMapWait(coll,function(data){
   console.log(data);
 });
 
