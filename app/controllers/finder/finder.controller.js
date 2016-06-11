@@ -117,10 +117,6 @@ function createSocketConnection(domain, proxy, mxRecordIp, emailToVerify, retry)
     //console.log("mxRecord: " + mxRecordIp);
 
     Socks.createConnection(options, function (err, socket, info) {
-      setTimeout(function(){
-        socket.destroy();
-        resolve(false);
-      }, 15000);
       var responseData = "";
       if (err) {
          //Retry once
@@ -132,6 +128,10 @@ function createSocketConnection(domain, proxy, mxRecordIp, emailToVerify, retry)
           resolve(false);
         }
       } else {
+        setTimeout(function(){
+          socket.destroy();
+          resolve(false);
+        }, 15000);
         var commands = 0;
         //console.log('writing Helo');
         socket.write('EHLO '+ domain + '\r\n');
@@ -161,7 +161,7 @@ function createSocketConnection(domain, proxy, mxRecordIp, emailToVerify, retry)
           }
           //If proxy is blocked -- select another one.
           else if(responseData.match(/\n503(\s|\-)/i) != null){
-            emailController.errorMessage(err, data+ ' received a 503 message... Client host rejected: Improper use of SMTP command pipelining... beware and investigate, maybe its because you are using ELHO instead of HELO?: ' + emailToVerify + 'domain: '+domain+ 'proxy: '+JSON.stringify(proxy));
+            emailController.errorMessage(err, data+ ' received a 503 message... Client host rejected: Improper use of SMTP command pipelining... beware and investigate, maybe its because you are using ELHO instead of HELO?: ' + emailToVerify + ' \n domain: '+domain+ ' \n proxy: '+JSON.stringify(proxy));
             //reject({emailToVerify: emailToVerify, mxRecordIp:mxRecordIp, retry: retry + 1, proxy: undefined });
             resolve(false);
             //console.log('destroy socket');
@@ -297,7 +297,8 @@ function verifyEmailProxyService(domain, mxRecordIp, emailToVerify, retry, provi
           return data;
         });
       }).catch(function(data){
-        return verifyEmailProxyService(domain, data.mxRecordIp, data.emailToVerify, data.retry,'ovh'); //Retry up to 1 times with available proxies.
+        console.log("there was a problem, re-running");
+        return verifyEmailProxyService(domain, data.mxRecordIp, data.emailToVerify, data.retry, 'ovh'); //Retry up to 1 times with available proxies.
       });
   });
 }
@@ -321,7 +322,7 @@ exports.index = function(req, res) {
     lastName,
     patterns = [
     '{f}{last}',
-    '{last}',
+    /*'{last}',
     '{first}',
     '{f}{f2}{last}',
     '{first}{l}',
@@ -329,7 +330,7 @@ exports.index = function(req, res) {
     '{first}{last}',
     '{f}{l}',
     '{first}_{last}',
-    '{first}-{last}'
+    '{first}-{last}'*/
   ];
 
   firstName = cleanFirst(purifyName(req.query.first)).toLowerCase();
@@ -428,6 +429,9 @@ exports.index = function(req, res) {
           result.catchAll = true;
           catchAll = true;
         }
+
+        //Comment this code out when not testing
+        //saveLead = false
 
         if (saveLead) {
           return Lead.create(result).then(function (myResult) {
