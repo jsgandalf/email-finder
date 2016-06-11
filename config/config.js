@@ -45,10 +45,12 @@ var all = {
   privateProxyUsername: "s5",
   privateProxyPassword: "aukiej5ish",
   privateProxyRackUsername: "st362",
-  privateProxyRackPassword: "proxyrack"
+  privateProxyRackPassword: "748fyff8avqn"
 };
 
 module.exports = _.assign(config[env], all);
+
+//db.privateproxies.update({ provider: "proxyRack"}, { $set: { password: "748fyff8avqn"  }  }, { multi: true});
 
 //mongo candidate.52.mongolayer.com:10634/messagesumo-email -u adbrocks99 -pa14AbbJJ9dlkUi023jlsdf
 // db.proxies.remove({ created: { $lte:ISODate("2016-04-19T15:48:02.424Z") }})

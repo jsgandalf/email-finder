@@ -121,17 +121,30 @@ function createSocketConnection(domain, proxy, mxRecordIp, emailToVerify, retry)
       if (err) {
          //Retry once
          console.log(err);
-        if (retry < 1) {
+        if (retry < 2) {
           console.log('retry: ',retry);
-          reject({emailToVerify: emailToVerify, mxRecordIp:mxRecordIp, retry: retry + 1, proxy: proxy });
+          reject({emailToVerify: emailToVerify, mxRecordIp:mxRecordIp, retry: retry + 1, provider: 'ovh' });
         } else {
           resolve(false);
         }
       } else {
-        setTimeout(function(){
-          socket.destroy();
+        var timeout;
+        if (retry > 2 && retry < 4) { //On the 4th time, run our own backup IP's that we know work.
+          timeout = setTimeout(function () {
+            socket.destroy();
+            console.log('timed out - retry')
+            reject({emailToVerify: emailToVerify, mxRecordIp: mxRecordIp, retry: retry + 1, provider: 'ovh'});
+          }, 7000);
+        } else if (retry < 3) { //run proxyRack 3 times... (man proxy rack is being slow today...)
+          timeout = setTimeout(function () {
+            socket.destroy();
+            console.log('timed out - retry')
+            reject({emailToVerify: emailToVerify, mxRecordIp: mxRecordIp, retry: retry + 1, provider: 'proxyRack'});
+          }, 7000);
+        } else {
           resolve(false);
-        }, 15000);
+        }
+
         var commands = 0;
         //console.log('writing Helo');
         socket.write('EHLO '+ domain + '\r\n');
@@ -142,7 +155,6 @@ function createSocketConnection(domain, proxy, mxRecordIp, emailToVerify, retry)
           data = data.toString("utf-8");
           responseData += data;
           console.log(data);
-
           if(responseData.match(/220/i) != null && commands === 0){
             commands += 1;
             socket.write("MAIL FROM: <" + emailAccount.email + ">\r\n");
@@ -156,46 +168,69 @@ function createSocketConnection(domain, proxy, mxRecordIp, emailToVerify, retry)
 
 
           //If it is clogged you will get 450 4.2.1  https://support.google.com/mail/answer/6592 6si12648809pfe.172 - gsmtp
-          if(responseData.match(/450 4.2.1/i) != null && responseData.match(/221/i) != null && responseData.match(/250/i) != null && responseData.match(/220/i) != null){
-            resolve(emailToVerify);
+          if((responseData.match(/452 4.1.1/i) != null ||responseData.match(/450 4.2.1/i) != null) && responseData.match(/221/i) != null && responseData.match(/250/i) != null && responseData.match(/220/i) != null){
+            clearTimeout(timeout);
+            if(retry < 3) {
+              reject({emailToVerify: emailToVerify, mxRecordIp: mxRecordIp, retry: retry + 1, provider: 'proxyRack'});
+            } else {
+              reject(false);
+            }
           }
           //If proxy is blocked -- select another one.
-          else if(responseData.match(/\n503(\s|\-)/i) != null){
+          else if(responseData.match(/\n503(\s|\-)/i) != null) {
+            clearTimeout(timeout);
             emailController.errorMessage(err, data+ ' received a 503 message... Client host rejected: Improper use of SMTP command pipelining... beware and investigate, maybe its because you are using ELHO instead of HELO?: ' + emailToVerify + ' \n domain: '+domain+ ' \n proxy: '+JSON.stringify(proxy));
-            //reject({emailToVerify: emailToVerify, mxRecordIp:mxRecordIp, retry: retry + 1, proxy: undefined });
             resolve(false);
-            //console.log('destroy socket');
             socket.destroy();
           }
-          else if(responseData.match(/\n554(\s|\-)/i) != null && responseData.match(/554 5.7.1/)!= null){
+          else if(responseData.match(/\n554(\s|\-)/i) != null && responseData.match(/554 5.7.1/)!= null) {
+            clearTimeout(timeout);
             resolve(false);
             //console.log('destroy socket');
             socket.destroy();
           }
           else if(responseData.match(/spamhaus/i) != null) {
-            emailController.errorMessage(err, data+ ' Spmahaus violation!!! Watch out!!!: ' + emailToVerify + 'domain: '+domain+ 'proxy: '+JSON.stringify(proxy));
-            reject({emailToVerify: emailToVerify, mxRecordIp:mxRecordIp, retry: retry + 1, proxy: undefined });
-          }else if(responseData.match(/\n554(\s|\-)/i) != null && responseData.match(/554 5.7.1/)== null){
+            clearTimeout(timeout);
+            emailController.errorMessage(err, data+ ' Spamhaus violation! Watch out!: ' + emailToVerify + 'domain: '+domain+ 'proxy: '+JSON.stringify(proxy));
+            if(retry == 4) {
+              reject({emailToVerify: emailToVerify, mxRecordIp: mxRecordIp, retry: retry + 1, provider: 'ovh'});
+            }else if(retry < 3) {
+              reject({emailToVerify: emailToVerify, mxRecordIp: mxRecordIp, retry: retry + 1, provider: 'proxyRack'});
+            }else{
+              reject(false);
+            }
+          }else if(responseData.match(/\n554(\s|\-)/i) != null && responseData.match(/554 5.7.1/)== null) {
+            clearTimeout(timeout);
             console.log('Spam IP trying to verify: ', emailToVerify)
-            emailController.errorMessage(err, data+ ' received a 554 message... either spam or sync error... beware and investiage: ' + emailToVerify + 'domain: '+domain+ 'proxy: '+JSON.stringify(proxy));
-            reject({emailToVerify: emailToVerify, mxRecordIp:mxRecordIp, retry: retry + 1, proxy: undefined });
+            emailController.errorMessage(err, data+ ' received a 554 message... either spam or sync error... beware and investigate: ' + emailToVerify + 'domain: '+domain+ 'proxy: '+JSON.stringify(proxy));
+            if(retry == 4) {
+              reject({emailToVerify: emailToVerify, mxRecordIp: mxRecordIp, retry: retry + 1, provider: 'ovh'});
+            }else if(retry < 3) {
+              reject({emailToVerify: emailToVerify, mxRecordIp: mxRecordIp, retry: retry + 1, provider: 'proxyRack'});
+            }else{
+              reject(false);
+            }
             socket.destroy();
           }else if (responseData.match(/\n5[0-9][0-9](\s|\-)/i) != null && responseData.match(/221/i) != null) {
+            clearTimeout(timeout);
             console.log("Not a valid email: ",emailToVerify)
             socket.destroy();
             resolve(false);
           } else if (responseData.match(/221/i) != null && responseData.match(/250/i) != null && responseData.match(/220/i) != null) {
+            clearTimeout(timeout);
             socket.destroy();
             console.log("Verified: " + emailToVerify);
             resolve(emailToVerify);
           }
         });
         socket.on('close', function () {
+          clearTimeout(timeout);
           socket.destroy();
           //console.log('Client disconnected from proxy');
         });
 
         socket.on('error', function (err) {
+          clearTimeout(timeout);
           //console.log('My Error: ' + err.toString());
           socket.destroy();
         });
@@ -291,6 +326,7 @@ function verifyEmailProxyService(domain, mxRecordIp, emailToVerify, retry, provi
       return emailController.sendMessage('Problem on Messagesumo Checker', JSON.stringify(proxy)+ ' ---- '+  +'You have run out of available proxies on email checker. Check your database or increase with your proxy provider plan!  This is very bad... This means you need to get a developer looking at the messagesumo-email checker app ASAP, no questions asked.');
     }
     proxy = proxy[0];
+    console.log(provider)
     return createSocketConnection(domain, proxy, mxRecordIp, emailToVerify, retry)
       .then(function(data) {
         return unsetProxy(proxy._id).then(function() {
@@ -298,7 +334,7 @@ function verifyEmailProxyService(domain, mxRecordIp, emailToVerify, retry, provi
         });
       }).catch(function(data){
         console.log("there was a problem, re-running");
-        return verifyEmailProxyService(domain, data.mxRecordIp, data.emailToVerify, data.retry, 'ovh'); //Retry up to 1 times with available proxies.
+        return verifyEmailProxyService(domain, data.mxRecordIp, data.emailToVerify, data.retry, data.provider); //Retry up to 1 times with available proxies.
       });
   });
 }
@@ -322,7 +358,7 @@ exports.index = function(req, res) {
     lastName,
     patterns = [
     '{f}{last}',
-    /*'{last}',
+    '{last}',
     '{first}',
     '{f}{f2}{last}',
     '{first}{l}',
@@ -330,7 +366,7 @@ exports.index = function(req, res) {
     '{first}{last}',
     '{f}{l}',
     '{first}_{last}',
-    '{first}-{last}'*/
+    '{first}-{last}'
   ];
 
   firstName = cleanFirst(purifyName(req.query.first)).toLowerCase();
@@ -462,12 +498,12 @@ exports.index = function(req, res) {
       catchAll: false
     };
 
-    if(err == 'Could not find domain name for this company in google'){
+    if(err == 'Could not find domain name for this company in google') {
       res.status(500).json({ error: 'Could not find email'})
-    }else{
+    } else {
       res.status(200).json(result);
     }
-    if(typeof err != 'undefined' && err != null && err.code == 'ENODATA'){
+    if(typeof err != 'undefined' && err != null && err.code == 'ENODATA') {
       console.log('got here!!')
     }
     emailController.errorMessage(err, JSON.stringify(result));
