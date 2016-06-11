@@ -14,6 +14,7 @@ var emailController = require('../email/email.controller');
 var config = require('../../../config/config');
 var moment = require('moment');
 var reflectMap = require('../../utils/reflect-map');
+var reflectMapWait = require('../../utils/reflect-map-wait');
 var uuid = require('node-uuid');
 
 function randomStr(m) {
@@ -88,7 +89,6 @@ function createSocketConnection(domain, proxy, mxRecordIp, emailToVerify, retry)
     var emailAccount = emailAccounts[Math.floor((Math.random() * 49))];
 
     //console.log('Try: ' + proxy.ip);
-
     var options = {
       proxy: {
         ipaddress: proxy.ip, // Random public proxy
@@ -117,11 +117,15 @@ function createSocketConnection(domain, proxy, mxRecordIp, emailToVerify, retry)
     //console.log("mxRecord: " + mxRecordIp);
 
     Socks.createConnection(options, function (err, socket, info) {
+      setTimeout(function(){
+        socket.destroy();
+        resolve(false);
+      }, 15000);
       var responseData = "";
       if (err) {
-         //console.log('failed to connect');
+         //Retry once
          console.log(err);
-        if (retry < 3) {
+        if (retry < 1) {
           console.log('retry: ',retry);
           reject({emailToVerify: emailToVerify, mxRecordIp:mxRecordIp, retry: retry + 1, proxy: proxy });
         } else {
@@ -174,20 +178,15 @@ function createSocketConnection(domain, proxy, mxRecordIp, emailToVerify, retry)
           }else if(responseData.match(/\n554(\s|\-)/i) != null && responseData.match(/554 5.7.1/)== null){
             console.log('Spam IP trying to verify: ', emailToVerify)
             emailController.errorMessage(err, data+ ' received a 554 message... either spam or sync error... beware and investiage: ' + emailToVerify + 'domain: '+domain+ 'proxy: '+JSON.stringify(proxy));
-            //reject({emailToVerify: emailToVerify, mxRecordIp:mxRecordIp, retry: retry + 1, proxy: undefined });
-            resolve(false);
-            //console.log('destroy socket');
+            reject({emailToVerify: emailToVerify, mxRecordIp:mxRecordIp, retry: retry + 1, proxy: undefined });
             socket.destroy();
           }else if (responseData.match(/\n5[0-9][0-9](\s|\-)/i) != null && responseData.match(/221/i) != null) {
             console.log("Not a valid email: ",emailToVerify)
-            /*console.log(emailToVerify)
-            console.log(responseData)*/
             socket.destroy();
             resolve(false);
           } else if (responseData.match(/221/i) != null && responseData.match(/250/i) != null && responseData.match(/220/i) != null) {
             socket.destroy();
             console.log("Verified: " + emailToVerify);
-            //console.log(responseData)
             resolve(emailToVerify);
           }
         });
@@ -230,13 +229,13 @@ function unsetProxy(proxyId){
   return deferred.promise;
 }
 
-function updateRandomProxy(myId){
+function updateRandomProxy(myId, provider){
   var date = new Date(); //Lock Error
   //date.setMinutes(date.getHours() - 48);
-  date.setMinutes(date.getHours() - 1);
-  console.log(date)
+  date.setMinutes(date.getMinutes() - 1);
   return PrivateProxy.update({
     isDead: false,
+    provider: provider,
     rnd: {$gte: Math.random()},
     $or: [
       {scriptId: {$exists: false}},
@@ -261,7 +260,7 @@ function verifyEmail(domain, mxRecordIp, emailToVerify, retry, oldProxy){
     updatePromise = Proxy.update({ _id: oldProxy._id}, { $set: { isDead: true}}).exec();
   }
   var myId = uuid.v4();
-  return updateRandomProxy(myId).then(function(){
+  return updateRandomProxy(myId, 'ovh').then(function(){
     return PrivateProxy.find({scriptId: myId}).exec();
   }).then(function(proxy) {
     if (proxy.length == 0 || proxy == null || typeof proxy == 'undefined') {
@@ -275,6 +274,30 @@ function verifyEmail(domain, mxRecordIp, emailToVerify, retry, oldProxy){
         });
       }).catch(function(data){
         return verifyEmail(domain, data.mxRecordIp, data.emailToVerify, data.retry, data.proxy); //Retry up to 3 times with available proxies.
+      });
+  });
+}
+
+function verifyEmailProxyService(domain, mxRecordIp, emailToVerify, retry, provider){
+  console.log("trying to verify: " + emailToVerify)
+  if(typeof provider == 'undefined' || provider == null){
+    provider = 'ovh';
+  }
+  var myId = uuid.v4();
+  return updateRandomProxy(myId, provider).then(function(){
+    return PrivateProxy.find({scriptId: myId}).exec();
+  }).then(function(proxy) {
+    if (proxy.length == 0 || proxy == null || typeof proxy == 'undefined') {
+      return emailController.sendMessage('Problem on Messagesumo Checker', JSON.stringify(proxy)+ ' ---- '+  +'You have run out of available proxies on email checker. Check your database or increase with your proxy provider plan!  This is very bad... This means you need to get a developer looking at the messagesumo-email checker app ASAP, no questions asked.');
+    }
+    proxy = proxy[0];
+    return createSocketConnection(domain, proxy, mxRecordIp, emailToVerify, retry)
+      .then(function(data) {
+        return unsetProxy(proxy._id).then(function() {
+          return data;
+        });
+      }).catch(function(data){
+        return verifyEmailProxyService(domain, data.mxRecordIp, data.emailToVerify, data.retry,'ovh'); //Retry up to 1 times with available proxies.
       });
   });
 }
@@ -354,16 +377,17 @@ exports.index = function(req, res) {
         }
       }).then(function(data){
         var mxRecordIp = data[0];
-        return reflectMap(patterns, function (pattern) {
+        //console.log(mxRecordIp);
+        return reflectMapWait(patterns, function (pattern) {
           var emailPattern = pattern
             .replace('{first}', firstName)
             .replace('{last}', lastName)
             .replace('{f}', firstName.charAt(0))
             .replace('{f2}', firstName.charAt(1))
             .replace('{l}', lastName.charAt(0));
-
-          return verifyEmail(domain, mxRecordIp, emailPattern.toLowerCase() + '@' + domain, 0, false);
-        }, 2);
+          console.log(emailPattern)
+          return verifyEmailProxyService(domain, mxRecordIp, emailPattern.toLowerCase() + '@' + domain, 0, 'proxyRack');
+        });
       }).then(function (verifiedEmails) {
         console.log('-------- all settled ---------');
         console.log(verifiedEmails);

@@ -31,6 +31,7 @@ var config = {
     db: 'mongodb://adbrocks99:a14AbbJJ9dlkUi023jlsdf@candidate.53.mongolayer.com:10223,candidate.52.mongolayer.com:10634/messagesumo-email?replicaSet=set-560ded97f3ea5ebdda00018d'
   }
 };
+//mongo candidate.52.mongolayer.com:10634/messagesumo-email -u adbrocks99 -pa14AbbJJ9dlkUi023jlsdf
 
 var all = {
   googleApi: 'AIzaSyB6bcXvtyjWPSAT-aXZWNTTiwl_MfDNQiM', //messagesumo-email-checker
@@ -42,7 +43,9 @@ var all = {
   developerEmail: 'sean@messagesumo.com',
   apiKey: 'UZE6pY5Yz6z3ektV:NEgYhceNtJaee3ga:H5TYvG57F2dzJF7G',
   privateProxyUsername: "s5",
-  privateProxyPassword: "aukiej5ish"
+  privateProxyPassword: "aukiej5ish",
+  privateProxyRackUsername: "st362",
+  privateProxyRackPassword: "proxyrack"
 };
 
 module.exports = _.assign(config[env], all);

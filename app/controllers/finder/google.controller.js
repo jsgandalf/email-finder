@@ -16,11 +16,17 @@ function findHref(links){
 function findCompanyWebsite(companyName) {
   var deferred = Bluebird.pending();
   var emailAccount = emailAccounts[Math.floor((Math.random() * 49))];
-  var proxyArry = emailAccount.proxy.split(":");
+  /*var proxyArry = emailAccount.proxy.split(":");
   var ip = proxyArry[0];
   var port = proxyArry[1];
   var username = proxyArry[2];
-  var password = proxyArry[3];
+  var password = proxyArry[3];*/
+
+   var ip = "23.106.208.186";
+   var port = 29842;
+   var username = "sthoma";
+   var password = "TnVDp4Zy";
+
 
   google(username, password, ip, port, companyName, function (err, res) {
     if (err) {

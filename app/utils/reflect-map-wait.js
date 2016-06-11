@@ -1,10 +1,8 @@
+'use strict';
+
 var Bluebird = require('bluebird');
 
-var coll = [1,2,3,4,5]
-
-reflectMapWait(coll,function(data){
-  console.log(data);
-});
+module.exports = reflectMapWait;
 
 function getRandom(min, max) {
   return Math.random() * (max - min) + min;

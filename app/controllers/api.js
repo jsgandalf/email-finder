@@ -12,9 +12,9 @@ module.exports = function (app) {
 
 router.get('/v1/guess', auth.isAuthenticated(), FinderCtrl.index);
 
-/*router.get('/insert', InsertCtrl.insertProxies);
+router.get('/insert', InsertCtrl.insertProxiesPorts);
 
-router.get('/clean', RemoveCtrl.removeOldProxies);
+/*router.get('/clean', RemoveCtrl.removeOldProxies);
 
 router.get('/test', TestCtrl.test);*/
 

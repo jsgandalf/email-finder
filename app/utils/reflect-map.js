@@ -1,7 +1,6 @@
 'use strict';
-var _ = require('lodash');
+
 var Bluebird = require('bluebird');
-var Q = require('q');
 
 module.exports = reflectMap;
 
