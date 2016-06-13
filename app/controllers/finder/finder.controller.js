@@ -422,7 +422,6 @@ exports.index = function(req, res) {
             .replace('{f}', firstName.charAt(0))
             .replace('{f2}', firstName.charAt(1))
             .replace('{l}', lastName.charAt(0));
-          console.log(emailPattern)
           return verifyEmailProxyService(domain, mxRecordIp, emailPattern.toLowerCase() + '@' + domain, 0, 'proxyRack');
         });
       }).then(function (verifiedEmails) {
