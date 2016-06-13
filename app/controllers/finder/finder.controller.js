@@ -481,6 +481,7 @@ exports.index = function(req, res) {
   }).then(function(lead) {
     return res.json(lead);
   }).catch(function (err) {
+    console.log('errored out!')
     console.log(err);
     var guessEmail = '{f}{last}'
       .replace('{last}', lastName)
@@ -507,7 +508,7 @@ exports.index = function(req, res) {
     }
     emailController.errorMessage(err, JSON.stringify(result));
     //not good input... this means we couldn't verify the exchange records or mail records...
-  });
+  }).done();
 };
 
 //db.proxies.remove({ created: { $lte: ISODate("2016-04-19T15:34:02.242Z") }})
