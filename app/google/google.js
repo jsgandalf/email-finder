@@ -50,24 +50,17 @@ var igoogle = function (user, password, host, port, query, start, callback, redi
   for (var k in google.requestOptions) {
     requestOptions[k] = google.requestOptions[k]
   }
-
-  //var proxyUrl = "http://" + user + ":" + password + "@" + host + ":" + port;
-
-  /*host = "23.106.208.186";
-  port =  "29842";
-  user =  "sthoma";
-  password = "TnVDp4Zy";*/
-  var proxyUrl = "http://" + host + ":" + port;
-  //console.log(proxyUrl);
-
-  var proxiedRequest = request.defaults({'proxy': proxyUrl});
-  var auth = 'Basic ' + new Buffer(user + ':' + password).toString('base64');
-  requestOptions.proxy = proxyUrl;
   requestOptions.tunnel = true;
   requestOptions.headers = {
-    "Cache-Control" : "no-cache",
-    'Proxy-Authorization': auth
+    //'User-Agent': agent,
+    "Cache-Control" : "no-cache"
   };
+  requestOptions.proxy = "http://" + host + ":" + port;
+  if(user != null && password != null) {
+    requestOptions.headers['Proxy-Authorization'] = 'Basic ' + new Buffer(user + ':' + password).toString('base64');
+  }
+
+  console.log(requestOptions)
 
   request(requestOptions, function (err, resp, body) {
     if ((err == null) && resp.statusCode === 200) {

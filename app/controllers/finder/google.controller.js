@@ -1,8 +1,6 @@
 var google = require('../../google/google');
 var Bluebird = require('bluebird');
 var _ = require('lodash');
-//var emailAccounts = require('../../config/emailAccounts');
-var emailAccounts = require('../../../config/emailAccounts');
 
 google.resultsPerPage = 10;
 
@@ -15,17 +13,11 @@ function findHref(links){
 
 function findCompanyWebsite(companyName) {
   var deferred = Bluebird.pending();
-  var emailAccount = emailAccounts[Math.floor((Math.random() * 49))];
-  /*var proxyArry = emailAccount.proxy.split(":");
-  var ip = proxyArry[0];
-  var port = proxyArry[1];
-  var username = proxyArry[2];
-  var password = proxyArry[3];*/
 
-   var ip = "23.106.208.186";
-   var port = 29842;
-   var username = "sthoma";
-   var password = "TnVDp4Zy";
+  var ip = "37.48.125.203";
+  var port = 222;
+  var username = "bryson";
+  var password = "Wayne1!!!";
 
 
   google(username, password, ip, port, companyName, function (err, res) {

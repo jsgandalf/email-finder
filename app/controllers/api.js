@@ -1,9 +1,6 @@
 var express = require('express'),
   router = express.Router(),
   FinderCtrl = require('./finder/finder.controller'),
-  InsertCtrl = require('./finder/insert.controller'),
-  RemoveCtrl = require('./finder/remove.controller'),
-  TestCtrl = require('./proxy/test.controller'),
   auth = require('./components/auth/auth.service');
 
 module.exports = function (app) {
@@ -12,10 +9,8 @@ module.exports = function (app) {
 
 router.get('/v1/guess', auth.isAuthenticated(), FinderCtrl.index);
 
-router.get('/insert', InsertCtrl.insertProxiesPorts);
+//http://localhost:3000/api/v1/guess?key=UZE6pY5Yz6z3ektV:NEgYhceNtJaee3ga:H5TYvG57F2dzJF7Ginvalidate&first=john&last=Johnson&domain=premera.com
 
-/*router.get('/clean', RemoveCtrl.removeOldProxies);
-
-router.get('/test', TestCtrl.test);*/
-
-/*router.get('/testPrivate', TestCtrl.testPrivate);*/
+router.get('/*', function (req, res, next) {
+  res.send(403); //res.render('index', { title: 'Generator-Express MVC' });
+});
