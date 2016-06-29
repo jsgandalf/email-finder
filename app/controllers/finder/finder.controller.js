@@ -44,9 +44,9 @@ function verifyEmailProxyService(domain, mxRecordIp, emailToVerify, retry, provi
 
 // Get list of accounts
 exports.index = function(req, res) {
-  var domain,
-    firstName,
-    lastName,
+  var domain = utils.purifyDomain(req.query.domain),
+    firstName = utils.cleanFirst(utils.purifyName(req.query.first)).toLowerCase(),
+    lastName = utils.cleanLast(utils.purifyName(req.query.last)).toLowerCase(),
     patterns = [
     '{f}{last}',
     '{last}',
@@ -59,10 +59,6 @@ exports.index = function(req, res) {
     '{first}_{last}',
     '{first}-{last}'
   ];
-
-  firstName = utils.cleanFirst(utils.purifyName(req.query.first)).toLowerCase();
-  lastName = utils.cleanLast(utils.purifyName(req.query.last)).toLowerCase();
-  domain = utils.purifyDomain(req.query.domain);
 
   var promise = new Bluebird(function(resolve){ resolve(domain)});
   //invoke a company lookup if this is not a url.
