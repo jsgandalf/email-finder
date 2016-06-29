@@ -42,12 +42,8 @@ function verifyEmailProxyService(domain, mxRecordIp, emailToVerify, retry, provi
   });
 }
 
-// Get list of accounts
-exports.index = function(req, res) {
-  var domain = utils.purifyDomain(req.query.domain),
-    firstName = utils.cleanFirst(utils.purifyName(req.query.first)).toLowerCase(),
-    lastName = utils.cleanLast(utils.purifyName(req.query.last)).toLowerCase(),
-    patterns = [
+function guessEmail(firstName, lastName, domain){
+  var patterns = [
     '{f}{last}',
     '{last}',
     '{first}',
@@ -59,50 +55,60 @@ exports.index = function(req, res) {
     '{first}_{last}',
     '{first}-{last}'
   ];
+  var promise = Q.when(true);
+  if (typeof lead != 'undefined' && lead != null && moment(lead.created).isBefore(moment().subtract(3, 'months'))) {
+    //console.log('deleting cache and refreshing');
+    promise = Lead.remove({ _id: lead._id }).exec();
+  }
+  return promise.then(function() {
+    return utils.getIp(domain);
+  }).then(function(data){
+    var mxRecordIp = data;
 
+    console.log('Verifying: ' + firstName + ' ' + lastName + ' on ' + domain);
+
+    return reflectMapWait(patterns, function (pattern) {
+      var emailPattern = pattern
+        .replace('{first}', firstName)
+        .replace('{last}', lastName)
+        .replace('{f}', firstName.charAt(0))
+        .replace('{f2}', firstName.charAt(1))
+        .replace('{l}', lastName.charAt(0));
+      return verifyEmailProxyService(domain, mxRecordIp, emailPattern.toLowerCase() + '@' + domain, 0, 'proxyRack');
+    });
+  }).then(function (verifiedEmails) {
+    return utils.formatResponse(verifiedEmails, firstName, lastName, domain, patterns);
+  })
+}
+
+function findCompanyUrl(domain){
   var promise = new Bluebird(function(resolve){ resolve(domain)});
   //invoke a company lookup if this is not a url.
   if (domain.match(/^(([a-zA-Z]{1})|([a-zA-Z]{1}[a-zA-Z]{1})|([a-zA-Z]{1}[0-9]{1})|([0-9]{1}[a-zA-Z]{1})|([a-zA-Z0-9][a-zA-Z0-9-_]{1,61}[a-zA-Z0-9]))\.([a-zA-Z]{2,6}|[a-zA-Z0-9-]{2,30}\.[a-zA-Z]{2,3})$/i) == null) {
-    //The Zrnich Law Group, P.C.
-    promise = GoogleCtrl.findCompanyWebsite(domain);
+    promise = GoogleCtrl.findCompanyWebsite(domain); //The Zrnich Law Group, P.C.
   }
+  return promise;
+}
 
-  promise.then(function(data) {
+// Find the Email
+//Example: http://localhost:3000/api/v1/guess?key=UZE6pY5Yz6z3ektV:NEgYhceNtJaee3ga:H5TYvG57F2dzJF7Ginvalidate&first=James&last=Johnson&domain=godaddy.com
+exports.index = function(req, res) {
+  var domain = utils.purifyDomain(req.query.domain),
+    firstName = utils.cleanFirst(utils.purifyName(req.query.first)).toLowerCase(),
+    lastName = utils.cleanLast(utils.purifyName(req.query.last)).toLowerCase();
+
+  findCompanyUrl(domain).then(function(data) {
     domain = utils.purifyDomain(data.toLowerCase());
     return Lead.findOne({firstName: firstName, lastName: lastName, domain: domain}).exec();
   }).then(function(lead) {
     if (typeof lead != 'undefined' && lead != null && moment(lead.created).isAfter(moment().subtract(3, 'months'))) {
       return Q.when(lead); //console.log('cached');
     } else {
-      var promise = Q.when(true);
-      if (typeof lead != 'undefined' && lead != null && moment(lead.created).isBefore(moment().subtract(3, 'months'))) {
-        //console.log('deleting cache and refreshing');
-        promise = Lead.remove({ _id: lead._id }).exec();
-      }
-      return promise.then(function() {
-        return utils.getIp(domain);
-      }).then(function(data){
-        var mxRecordIp = data;
-
-        console.log('Verifying: ' + firstName + ' ' + lastName + ' on ' + domain);
-
-        return reflectMapWait(patterns, function (pattern) {
-          var emailPattern = pattern
-            .replace('{first}', firstName)
-            .replace('{last}', lastName)
-            .replace('{f}', firstName.charAt(0))
-            .replace('{f2}', firstName.charAt(1))
-            .replace('{l}', lastName.charAt(0));
-          return verifyEmailProxyService(domain, mxRecordIp, emailPattern.toLowerCase() + '@' + domain, 0, 'proxyRack');
-        });
-      }).then(function (verifiedEmails) {
-        return utils.formatResponse(verifiedEmails, firstName, lastName, domain, patterns);
-      })
+      return guessEmail(firstName, lastName, domain)
     }
   }).then(function(lead) {
     return res.json(lead);
   }).catch(function (err) {
-    //console.log('errored out!')
     console.log(err);
     var guessEmail = '{f}{last}'
       .replace('{last}', lastName)
