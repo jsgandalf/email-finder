@@ -147,7 +147,7 @@ function purifyDomain2(domain){
 }
 
 
-function formatResponse(verifiedEmails, lastName, firstName, domain, patterns){
+function formatResponse(verifiedEmails, firstName, lastName, domain, patterns){
   var saveLead = false;
   var emails = _.filter(verifiedEmails, function (email) {
     return typeof email == 'string';

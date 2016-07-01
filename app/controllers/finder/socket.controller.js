@@ -51,7 +51,7 @@ function createSocketConnection(domain, proxy, mxRecordIp, emailToVerify, retry)
         socket.on('data', function (data) {
           data = data.toString("utf-8");
           responseData += data;
-          //console.log(data);
+          console.log(data);
           if(responseData.match(/220/i) != null && commands === 0){
             commands += 1;
             socket.write("MAIL FROM: <" + emailAccount.email + ">\r\n");
