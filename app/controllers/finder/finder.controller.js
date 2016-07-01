@@ -72,10 +72,13 @@ function guessEmail(firstName, lastName, domain){
         .replace('{f}', firstName.charAt(0))
         .replace('{f2}', firstName.charAt(1))
         .replace('{l}', lastName.charAt(0));
-      return verifyEmailProxyService(domain, mxRecordIp, emailPattern.toLowerCase() + '@' + domain, 0, 'proxyRack');
+      return verifyEmailProxyService(domain, mxRecordIp, emailPattern.toLowerCase() + '@' + domain, 0, 'ovh');
     });
   }).then(function (verifiedEmails) {
-    return utils.formatResponse(verifiedEmails, firstName, lastName, domain, patterns);
+    return utils.formatResponse(verifiedEmails, firstName, lastName, domain, patterns).then(function(data){
+      console.log(data)
+      return data;
+    });
   })
 }
 

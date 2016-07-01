@@ -39,7 +39,7 @@ function createSocketConnection(domain, proxy, mxRecordIp, emailToVerify, retry)
     }
 
     //console.log("mxRecord: " + mxRecordIp);
-
+    console.log('Verifying: ' + emailToVerify);
     Socks.createConnection(options, function (err, socket, info) {
       var responseData = "";
       if (err) {
@@ -48,11 +48,10 @@ function createSocketConnection(domain, proxy, mxRecordIp, emailToVerify, retry)
       } else {
         var commands = 0;
         socket.write('EHLO '+ domain + '\r\n');
-        console.log('hello');
         socket.on('data', function (data) {
           data = data.toString("utf-8");
           responseData += data;
-          console.log(data);
+          //console.log(data);
           if(responseData.match(/220/i) != null && commands === 0){
             commands += 1;
             socket.write("MAIL FROM: <" + emailAccount.email + ">\r\n");

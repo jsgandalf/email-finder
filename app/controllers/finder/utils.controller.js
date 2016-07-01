@@ -196,7 +196,7 @@ function formatResponse(verifiedEmails, lastName, firstName, domain, patterns){
       return myResult;
     });
   } else {
-    return result;
+    return Bluebird.resolve(result);
   }
 }
 
