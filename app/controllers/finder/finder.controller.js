@@ -82,6 +82,14 @@ function guessEmail(firstName, lastName, domain){
   })
 }
 
+var emailPattern = "dayne";
+var domain = "ghostblogwriters.com";
+var mxRecordIp = "74.125.28.26";
+
+return verifyEmailProxyService(domain, mxRecordIp, emailPattern.toLowerCase() + '@' + domain, 0, 'ovh').then(function(data){
+  console.log(data);
+}).done();
+
 function findCompanyUrl(domain){
   var promise = new Bluebird(function(resolve){ resolve(domain)});
   //invoke a company lookup if this is not a url.

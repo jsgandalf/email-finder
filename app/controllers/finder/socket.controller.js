@@ -66,26 +66,33 @@ function createSocketConnection(domain, proxy, mxRecordIp, emailToVerify, retry)
 
           //If it is clogged you will get 450 4.2.1  https://support.google.com/mail/answer/6592 6si12648809pfe.172 - gsmtp
           if((responseData.match(/452 4.1.1/i) != null ||responseData.match(/450 4.2.1/i) != null) && responseData.match(/221/i) != null && responseData.match(/250/i) != null && responseData.match(/220/i) != null){
+            console.log('Clogged, retry with 452');
             retryVerification(retry,{emailToVerify: emailToVerify, mxRecordIp: mxRecordIp, retry: retry + 1, provider: 'ovh'}, reject);
           }
           //PROXY IS BLOCKED
           else if(responseData.match(/\n503(\s|\-)/i) != null || (responseData.match(/\n554(\s|\-)/i) != null && responseData.match(/554 5.7.1/)!= null)) {
+            console.log('503 response or 554')
             //emailController.errorMessage(err, data+ ' received a 503 message... Client host rejected: Improper use of SMTP command pipelining... beware and investigate, maybe its because you are using ELHO instead of HELO?: ' + emailToVerify + ' \n domain: '+domain+ ' \n proxy: '+JSON.stringify(proxy));
             resolve(false);
             socket.destroy();
           }
           else if(responseData.match(/spamhaus/i) != null) {
+            console.log('Spamhaus')
             //emailController.errorMessage(err, data+ ' Spamhaus violation! Watch out!: ' + emailToVerify + 'domain: '+domain+ 'proxy: '+JSON.stringify(proxy));
             reject(false);
           }else if(responseData.match(/\n554(\s|\-)/i) != null && responseData.match(/554 5.7.1/)== null) {
             //emailController.errorMessage(err, data+ ' received a 554 message... either spam or sync error... beware and investigate: ' + emailToVerify + 'domain: '+domain+ 'proxy: '+JSON.stringify(proxy));
+            console.log('554!')
             reject(false);
             socket.destroy();
           }else if (responseData.match(/\n5[0-9][0-9](\s|\-)/i) != null && responseData.match(/221/i) != null) { //NOT A VALID EMAIL console.log("Not a valid email: ",emailToVerify)
+            console.log('Not a valid email!')
             socket.destroy();
             resolve(false);
           } else if (responseData.match(/221/i) != null && responseData.match(/250/i) != null && responseData.match(/220/i) != null) { //VERIFIED!!! :) console.log("Verified: " + emailToVerify);
             socket.destroy();
+            console.log('verified!')
+            console.log(emailToVerify)
             resolve(emailToVerify);
           }
         });
