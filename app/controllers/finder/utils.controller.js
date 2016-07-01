@@ -14,6 +14,7 @@ exports.unsetProxy = unsetProxy;
 exports.updateRandomProxy = updateRandomProxy;
 exports.formatResponse = formatResponse;
 exports.getIp = getIp;
+exports.handleError = handleError;
 
 function getDns(sorted, retry){
   return Bluebird.promisify(dns.resolve4)(sorted[retry].exchange).catch(function(){
@@ -197,5 +198,30 @@ function formatResponse(verifiedEmails, lastName, firstName, domain, patterns){
   } else {
     return result;
   }
+}
+
+function handleError(err, res, firstName, lastName, domain){
+  console.log(err);
+  var guessEmail = '{f}{last}'
+    .replace('{last}', lastName)
+    .replace('{f}', firstName.charAt(0));
+
+  var result = {
+    firstName: firstName,
+    lastName: lastName,
+    domain: domain,
+    email: guessEmail.toLowerCase() + '@' + domain,
+    confidence: parseInt((Math.floor(Math.random() * 7)) + 1, 10),
+    response: [guessEmail.toLowerCase() + '@' + domain],
+    created: new Date(),
+    catchAll: false
+  };
+
+  if(err == 'Could not find domain name for this company in google') {
+    return res.status(500).json({ error: 'Could not find email'})
+  } else {
+    return res.status(200).json(result);
+  }
+  //emailController.errorMessage(err, JSON.stringify(result)); //not good input... this means we couldn't verify the exchange records or mail records...
 }
 

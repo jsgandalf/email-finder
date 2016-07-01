@@ -43,11 +43,12 @@ function createSocketConnection(domain, proxy, mxRecordIp, emailToVerify, retry)
     Socks.createConnection(options, function (err, socket, info) {
       var responseData = "";
       if (err) {
+        console.log(err);
         resolve(false);
       } else {
         var commands = 0;
         socket.write('EHLO '+ domain + '\r\n');
-
+        console.log('hello');
         socket.on('data', function (data) {
           data = data.toString("utf-8");
           responseData += data;
@@ -69,12 +70,8 @@ function createSocketConnection(domain, proxy, mxRecordIp, emailToVerify, retry)
             retryVerification(retry,{emailToVerify: emailToVerify, mxRecordIp: mxRecordIp, retry: retry + 1, provider: 'ovh'}, reject);
           }
           //PROXY IS BLOCKED
-          else if(responseData.match(/\n503(\s|\-)/i) != null) {
+          else if(responseData.match(/\n503(\s|\-)/i) != null || (responseData.match(/\n554(\s|\-)/i) != null && responseData.match(/554 5.7.1/)!= null)) {
             //emailController.errorMessage(err, data+ ' received a 503 message... Client host rejected: Improper use of SMTP command pipelining... beware and investigate, maybe its because you are using ELHO instead of HELO?: ' + emailToVerify + ' \n domain: '+domain+ ' \n proxy: '+JSON.stringify(proxy));
-            resolve(false);
-            socket.destroy();
-          }
-          else if(responseData.match(/\n554(\s|\-)/i) != null && responseData.match(/554 5.7.1/)!= null) {
             resolve(false);
             socket.destroy();
           }
