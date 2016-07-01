@@ -12,7 +12,11 @@ function retryVerification(retry, params, cb){
   }
 }
 
+var numOpen = 0;
+
 function createSocketConnection(domain, proxy, mxRecordIp, emailToVerify, retry){
+  numOpen += 1;
+  console.log('tagCreateSocket '+ numOpen);
   return new Bluebird(function (resolve, reject) {
     var smtpPort = 25;
     var emailAccount = emailAccounts[Math.floor((Math.random() * 49))];
@@ -51,7 +55,7 @@ function createSocketConnection(domain, proxy, mxRecordIp, emailToVerify, retry)
         socket.on('data', function (data) {
           data = data.toString("utf-8");
           responseData += data;
-          console.log(data);
+          //console.log(data);
           if(responseData.match(/220/i) != null && commands === 0){
             commands += 1;
             socket.write("MAIL FROM: <" + emailAccount.email + ">\r\n");
@@ -108,5 +112,8 @@ function createSocketConnection(domain, proxy, mxRecordIp, emailToVerify, retry)
         socket.resume();
       }
     });
+  }).finally(function(){
+    numOpen -= 1;
+    console.log('tagCloseSocket '+ numOpen);
   });
 }

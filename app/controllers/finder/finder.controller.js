@@ -28,10 +28,14 @@ function verifyEmailProxyService(domain, mxRecordIp, emailToVerify, retry, provi
     proxy = proxy[0];
     return SocketCtrl.createSocketConnection(domain, proxy, mxRecordIp, emailToVerify, retry)
       .then(function(data) {
-        return utils.unsetProxy(proxy._id).then(function() {
-          return data;
-        });
-      }).catch(function(data){
+          return utils.unsetProxy(proxy._id).then(function () {
+            return data;
+          }).catch(function(err){
+            console.log(err);
+            return data;
+          });
+      }).catch(function(err){
+        console.log(err);
         //console.log("there was a problem, re-running");
         return false;
         //return verifyEmailProxyService(domain, data.mxRecordIp, data.emailToVerify, data.retry, data.provider); //Retry up to 1 times with available proxies.
@@ -82,14 +86,6 @@ function guessEmail(firstName, lastName, domain){
   })
 }
 
-var emailPattern = "dayne";
-var domain = "ghostblogwriters.com";
-var mxRecordIp = "74.125.28.26";
-
-return verifyEmailProxyService(domain, mxRecordIp, emailPattern.toLowerCase() + '@' + domain, 0, 'ovh').then(function(data){
-  console.log(data);
-}).done();
-
 function findCompanyUrl(domain){
   var promise = new Bluebird(function(resolve){ resolve(domain)});
   //invoke a company lookup if this is not a url.
@@ -101,7 +97,12 @@ function findCompanyUrl(domain){
 
 // Find the Email
 //Example: http://localhost:3000/api/v1/guess?key=UZE6pY5Yz6z3ektV:NEgYhceNtJaee3ga:H5TYvG57F2dzJF7Ginvalidate&first=James&last=Johnson&domain=godaddy.com
+var numIncoming = 0;
+
 exports.index = function(req, res) {
+  numIncoming += 1;
+
+  console.log('tagIncoming ' + numIncoming);
   var domain = utils.purifyDomain(req.query.domain),
     firstName = utils.cleanFirst(utils.purifyName(req.query.first)).toLowerCase(),
     lastName = utils.cleanLast(utils.purifyName(req.query.last)).toLowerCase();
@@ -119,5 +120,18 @@ exports.index = function(req, res) {
     return res.json(lead);
   }).catch(function (err) {
     return utils.handleError(err, res, firstName, lastName, domain);
+  }).finally(function(){
+    numIncoming -= 1;
+    console.log('tagResolving ' + numIncoming);
   }).done();
 };
+
+/* test
+ var emailPattern = "dayne";
+ var domain = "ghostblogwriters.com";
+ var mxRecordIp = "74.125.28.26";
+
+ return verifyEmailProxyService(domain, mxRecordIp, emailPattern.toLowerCase() + '@' + domain, 0, 'ovh').then(function(data){
+ console.log(data);
+ }).done();
+ */

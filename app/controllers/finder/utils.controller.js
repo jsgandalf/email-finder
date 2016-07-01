@@ -4,6 +4,7 @@ var dns = require('dns');
 var _ = require('lodash');
 
 
+
 exports.randomStr = randomStr;
 exports.cleanFirst = cleanFirst;
 exports.cleanLast = cleanLast;
@@ -51,22 +52,22 @@ function getIp(domain){
 
 
 function unsetProxy(proxyId){
-  var deferred = Q.defer();
-  PrivateProxy.update({
-    _id: proxyId
-  }, {
-    $unset: {
-      scriptId: "",
-      scriptDate: ""
-    }
-  }, {multi: false}, function(err, data) {
-    if(err) {
-      deferred.reject(err);
-    } else {
-      deferred.resolve(data);
-    }
+  return new Bluebird(function(resolve, reject) {
+    PrivateProxy.update({
+      _id: proxyId
+    }, {
+      $unset: {
+        scriptId: "",
+        scriptDate: ""
+      }
+    }, {multi: false}, function (err, data) {
+      if (err) {
+        reject(err);
+      } else {
+        resolve(data);
+      }
+    });
   });
-  return deferred.promise;
 }
 
 function updateRandomProxy(myId, provider){
