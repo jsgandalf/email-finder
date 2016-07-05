@@ -5,6 +5,9 @@ var mppProxies = require('../../../config/mppProxies.js');
 
 google.resultsPerPage = 10;
 
+
+exports.findCompanyWebsite = findCompanyWebsite;
+
 function findHref(links){
   links = _.filter(links, function(link) {
     return link.href != null && link.href.match(/wikipedia/) == null && link.href.match(/linkedin/) == null;
@@ -13,31 +16,17 @@ function findHref(links){
 }
 
 function getProxy(){
-  //158.222.4.208:80:test_3:dog
-  //209.222.100.171:80:test_3:dog
-  /*var ip = "209.222.100.171";
-   var port = 80;
-   var username = "test_3";
-   var password = "dog";*/
+  var totalProxies = 7;
 
-  return mppProxies[Math.floor((Math.random() * 5))]; //out of 6 proxies
+  return mppProxies[Math.floor((Math.random() * (totalProxies - 1)))]; //out of 8 proxies
 }
 
 function findCompanyWebsite(companyName) {
-  var deferred = Bluebird.pending();
-  var proxy = getProxy();
-
-
-
-  var ip = proxy.ip;
-  var port = proxy.port;
-  var username = proxy.username;
-  var password = proxy.password;
-
   var retry = 0;
-  return tryGoogle(companyName, retry).catch(function() {
+  return tryGoogle(companyName, retry).catch(function(err) {
+    console.log(err)
     retry += 1;
-    if (retry < 3) {
+    if (retry < 10) {
       return tryGoogle(companyName, retry);
     }
   })
@@ -48,6 +37,12 @@ function findCompanyWebsite(companyName) {
 function tryGoogle(companyName){
   return new Bluebird(function(resolve, reject){
     var proxy = getProxy();
+    /*proxy = {
+      ip: "104.223.53.188",
+      port: 3130,
+      username: "redtango",
+      password: "Gw02D56322"
+    }*/
     google(proxy.username, proxy.password, proxy.ip, proxy.port, companyName, function (err, res) {
       if (err) {
         reject(err);
@@ -62,9 +57,7 @@ function tryGoogle(companyName){
   });
 }
 
-findCompanyWebsite("amplitude");
-
-exports.findCompanyWebsite = findCompanyWebsite;
+findCompanyWebsite("premera blue cross");
 
 /*
 findCompanyWebsite('Inboard Action Sports').then(function(data){
