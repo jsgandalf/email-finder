@@ -2,6 +2,7 @@ var PrivateProxy = require('../../models/privateProxies');
 var Bluebird = require('bluebird');
 var dns = require('dns');
 var _ = require('lodash');
+var Lead = require('../../models/lead.model.js');
 
 
 
