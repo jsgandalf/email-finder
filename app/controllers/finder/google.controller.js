@@ -57,7 +57,7 @@ function tryGoogle(companyName){
   });
 }
 
-findCompanyWebsite("premera blue cross");
+//findCompanyWebsite("premera blue cross");
 
 /*
 findCompanyWebsite('Inboard Action Sports').then(function(data){
