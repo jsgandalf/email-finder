@@ -188,7 +188,7 @@ function formatResponse(verifiedEmails, firstName, lastName, domain, patterns){
   }
 
   //***TESTING
-  saveLead = false; //Comment this code out when in production **TEST
+  //saveLead = false; //Comment this code out when in production **TEST
   //***TESTING
 
   if (saveLead) {
