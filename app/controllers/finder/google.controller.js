@@ -7,6 +7,7 @@ google.resultsPerPage = 10;
 
 
 exports.findCompanyWebsite = findCompanyWebsite;
+exports.tryGoogle = tryGoogle;
 
 function findHref(links){
   links = _.filter(links, function(link) {
@@ -16,7 +17,7 @@ function findHref(links){
 }
 
 function getProxy(){
-  var totalProxies = 7;
+  var totalProxies = mppProxies.length;
 
   return mppProxies[Math.floor((Math.random() * (totalProxies - 1)))]; //out of 8 proxies
 }
