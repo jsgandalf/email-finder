@@ -12,8 +12,7 @@ exports.cleanLast = cleanLast;
 exports.purifyName = purifyName;
 exports.purifyDomain = purifyDomain;
 exports.randomStr = randomStr;
-exports.unsetProxy = unsetProxy;
-exports.updateRandomProxy = updateRandomProxy;
+exports.getRandomProxy = getRandomProxy;
 exports.formatResponse = formatResponse;
 exports.getIp = getIp;
 exports.handleError = handleError;
@@ -71,6 +70,15 @@ function unsetProxy(proxyId){
   });
 }
 
+function getRandomProxy(myId, provider) {
+  return Bluebird.resolve(updateRandomProxy(myId, provider))
+  .disposer(function(proxy) {
+    if(proxy && proxy._id) {
+      return unsetProxy(proxy._id);
+    }
+  });
+}
+
 function updateRandomProxy(myId, provider){
   var date = new Date(); //Lock Error
   //date.setMinutes(date.getHours() - 48);
@@ -90,8 +98,8 @@ function updateRandomProxy(myId, provider){
   }, {multi: false}).then(function(data){
     if(data.nModified != 1){
       return Bluebird.delay(500).then(function(){ return updateRandomProxy(myId, provider)});
-    }else {
-      return data;
+    } else {
+      return PrivateProxy.findOne({scriptId: myId}).exec();
     }
   });
 }

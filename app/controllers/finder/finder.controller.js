@@ -19,22 +19,12 @@ function verifyEmailProxyService(domain, mxRecordIp, emailToVerify, retry, provi
     provider = 'ovh';
   }
   var myId = uuid.v4();
-  return utils.updateRandomProxy(myId, provider).then(function(){
-    return PrivateProxy.find({scriptId: myId}).exec();
-  }).then(function(proxy) {
-    if (proxy.length == 0 || proxy == null || typeof proxy == 'undefined') {
+  return Bluebird.using(utils.getRandomProxy(myId, provider), function(proxy) {
+    if (proxy == null || typeof proxy == 'undefined') {
       return emailController.sendMessage('Problem on Messagesumo Checker', JSON.stringify(proxy)+ ' ---- '+  +'You have run out of available proxies on email checker. Check your database or increase with your proxy provider plan!  This is very bad... This means you need to get a developer looking at the messagesumo-email checker app ASAP, no questions asked.');
     }
-    proxy = proxy[0];
     return SocketCtrl.createSocketConnection(domain, proxy, mxRecordIp, emailToVerify, retry)
-      .then(function(data) {
-          return utils.unsetProxy(proxy._id).then(function () {
-            return data;
-          }).catch(function(err){
-            console.log(err);
-            return data;
-          });
-      }).catch(function(err){
+      .catch(function(err){
         console.log(err);
         //console.log("there was a problem, re-running");
         return false;
