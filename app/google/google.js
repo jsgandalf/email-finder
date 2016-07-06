@@ -20,7 +20,7 @@ function google (user, password, host, port, query, start, callback) {
   } else {
     startIndex = start
   }
-  igoogle(user, password, host, port, query, startIndex, callback)
+  return igoogle(user, password, host, port, query, startIndex, callback)
 }
 
 google.resultsPerPage = 10
@@ -62,7 +62,7 @@ var igoogle = function (user, password, host, port, query, start, callback, redi
 
   console.log(requestOptions)
 
-  request(requestOptions, function (err, resp, body) {
+  var reqObject = request(requestOptions, function (err, resp, body) {
     if ((err == null) && resp.statusCode === 200) {
       var $ = cheerio.load(body)
       var res = {
@@ -112,7 +112,8 @@ var igoogle = function (user, password, host, port, query, start, callback, redi
     } else {
       callback(new Error('Error on response' + (resp ? ' (' + resp.statusCode + ')' : '') + ':' + err + ' : ' + body), null, null)
     }
-  })
+  });
+  return function(){ console.log('aborted'); reqObject.abort(); };
 }
 
 module.exports = google

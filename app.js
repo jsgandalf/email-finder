@@ -5,6 +5,9 @@ var express = require('express'),
   glob = require('glob'),
   mongoose = require('mongoose'),
   emailController = require('./app/controllers/email/email.controller');
+  require('bluebird').config({
+    cancellation: true
+  });
 
 mongoose.connect(config.db);
 var db = mongoose.connection;

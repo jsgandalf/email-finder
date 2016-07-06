@@ -1,7 +1,7 @@
 var Socks = require('socks');
 var emailAccounts = require('../../../config/emailAccounts');
 var Bluebird = require('bluebird');
-
+var emailController = require('../email/email.controller');
 exports.createSocketConnection = createSocketConnection;
 
 function retryVerification(retry, params, cb){

@@ -37,15 +37,17 @@ var all = {
   googleApi: 'AIzaSyB6bcXvtyjWPSAT-aXZWNTTiwl_MfDNQiM', //messagesumo-email-checker
   googleCx: '006553027622961256205:kskdydpj1o0',
   mandrill: "3lLRQYVspHTIUmce9sIbZg",
-  companyName: 'Message Sumo',
+  companyName: 'Gator Leads',
   companyPhone: '(425) 633-6351', //Current phone number in emails and other places.
-  systemEmail: 'support@messagesumo.com',
+  systemEmail: 'support@gatorleads.com',
+  systemName: 'Rachel Swenson',
   developerEmail: 'sean@messagesumo.com',
   apiKey: 'UZE6pY5Yz6z3ektV:NEgYhceNtJaee3ga:H5TYvG57F2dzJF7G',
   privateProxyUsername: "s5",
   privateProxyPassword: "aukiej5ish",
   privateProxyRackUsername: "st362",
-  privateProxyRackPassword: "748fyff8avqn"
+  privateProxyRackPassword: "748fyff8avqn",
+  sendGrid: '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'
 };
 
 module.exports = _.assign(config[env], all);
