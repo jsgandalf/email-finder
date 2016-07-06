@@ -7,5 +7,5 @@ var proxy = {
   password: null
 }
 
-controller.tryGoogle("premera blue cross", proxy);
+controller.tryGoogle("premera blue cross", proxy).done();
 
