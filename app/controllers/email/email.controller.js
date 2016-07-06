@@ -32,7 +32,7 @@ function sendMessage(subject, text) {
 
 function errorMessage(err, info) {
   return (new Bluebird(function(resolve, reject) {
-    var text = config.companyName + " failure: " + err + ' '+ err.stack;
+    var text = config.companyName + " failure: " + err + ' '+ (err && err.stack);
     var subject = config.companyName + " email checker failure";
     var helper = require('sendgrid').mail;
     var from_email = new helper.Email(config.systemEmail, config.systemName);
