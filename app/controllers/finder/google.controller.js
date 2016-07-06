@@ -22,28 +22,32 @@ function getProxy(){
   return mppProxies[Math.floor((Math.random() * (totalProxies - 1)))]; //out of 8 proxies
 }
 
-function findCompanyWebsite(companyName) {
-  var retry = 0;
-  return tryGoogle(companyName, retry).catch(function(err) {
-    console.log(err)
+function findCompanyWebsite(companyName, retry) {
+  if(typeof retry == 'undefined' || retry == null){
+    retry = 0;
+  }
+  return tryGoogle(companyName).catch(function(err) {
     retry += 1;
     if (retry < 10) {
-      return tryGoogle(companyName, retry);
+      return findCompanyWebsite(companyName, retry);
     }
-  })
-
-
+  });
 }
 
-function tryGoogle(companyName){
+/*
+ var proxy = {
+ ip: "108.59.14.208",
+ port: 13010,
+ username: null,
+ password: null
+ }
+ */
+
+function tryGoogle(companyName, proxy){
   return new Bluebird(function(resolve, reject){
-    var proxy = getProxy();
-    /*proxy = {
-      ip: "104.223.53.188",
-      port: 3130,
-      username: "redtango",
-      password: "Gw02D56322"
-    }*/
+    if(typeof proxy == 'undefined' || proxy == null) {
+      proxy = getProxy();
+    }
     google(proxy.username, proxy.password, proxy.ip, proxy.port, companyName, function (err, res) {
       if (err) {
         reject(err);
@@ -57,8 +61,6 @@ function tryGoogle(companyName){
     });
   });
 }
-
-//findCompanyWebsite("premera blue cross");
 
 /*
 findCompanyWebsite('Inboard Action Sports').then(function(data){
