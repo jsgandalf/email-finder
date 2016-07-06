@@ -58,8 +58,8 @@ function unsetProxy(proxyId){
       _id: proxyId
     }, {
       $unset: {
-        scriptId: "",
-        scriptDate: ""
+        scriptId: true,
+        scriptDate: true,
       }
     }, {multi: false}, function (err, data) {
       if (err) {
@@ -89,7 +89,7 @@ function updateRandomProxy(myId, provider){
     }
   }, {multi: false}).then(function(data){
     if(data.nModified != 1){
-      return Bluebird.delay(500).then(function(){ return updateRandomProxy(myId)});
+      return Bluebird.delay(500).then(function(){ return updateRandomProxy(myId, provider)});
     }else {
       return data;
     }
