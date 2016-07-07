@@ -113,7 +113,7 @@ var igoogle = function (user, password, host, port, query, start, callback, redi
       callback(new Error('Error on response' + (resp ? ' (' + resp.statusCode + ')' : '') + ':' + err + ' : ' + body), null, null)
     }
   });
-  return function(){ console.log('aborted'); reqObject.abort(); };
+  return function(){ reqObject.abort(); };
 }
 
 module.exports = google
