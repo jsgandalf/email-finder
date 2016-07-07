@@ -107,13 +107,15 @@ exports.index = function(req, res) {
       return guessEmail(firstName, lastName, domain)
     }
   }).then(function(lead) {
+    //console.log(lead)
     return res.json(lead);
   }).catch(function (err) {
+    console.log(err)
     return utils.handleError(err, res, firstName, lastName, domain);
-  }).finally(function(){
+  });/*.finally(function(){
     numIncoming -= 1;
     console.log('tagResolving ' + numIncoming);
-  }).done();
+  }).done();*/
 };
 
 /* test

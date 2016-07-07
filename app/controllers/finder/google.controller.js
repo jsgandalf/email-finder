@@ -33,15 +33,15 @@ function findCompanyWebsite(companyName, retry) {
     username: null,
     password: null
   }
-  return tryGoogle(companyName).then(function(data){
+  /*return tryGoogle(companyName).then(function(data){
     return data
   }).catch(function(err) {
     retry += 1;
     if (retry < 2) {
       return findCompanyWebsite(companyName, retry);
     }
-  });
-  /*return cancelSome.getFirst([
+  });*/
+  return cancelSome.getFirst([
     tryGoogle(companyName,proxy),
     tryGoogle(companyName,proxy),
     tryGoogle(companyName,proxy),
@@ -53,13 +53,15 @@ function findCompanyWebsite(companyName, retry) {
     tryGoogle(companyName,proxy),
     tryGoogle(companyName,proxy)
   ]).then(function (data) {
+    console.log(data)
     return data;
   }).catch(function(err) {
+    console.log('retry')
     retry += 1;
     if (retry < 2) {
       return findCompanyWebsite(companyName, retry);
     }
-  });*/
+  });
 }
 
 /*function findCompanyWebsite(companyName, retry) {
