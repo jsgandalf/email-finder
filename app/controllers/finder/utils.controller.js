@@ -200,7 +200,7 @@ function formatResponse(verifiedEmails, firstName, lastName, domain, patterns){
   //saveLead = false; //Comment this code out when in production **TEST
   //***TESTING
 
-  if (false && saveLead) {
+  if (saveLead) {
     return Lead.create(result).then(function (myResult) {
       myResult.catchAll = catchAll;
       return myResult;

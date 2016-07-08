@@ -21,110 +21,115 @@ function createSocketConnection(domain, proxy, mxRecordIp, emailToVerify, retry)
   var logId = ++ids;
   open.push(logId);
   console.log(logId + ' tagCreateSocket '+ numOpen);
-  return new Bluebird(function (resolve, reject) {
-    var smtpPort = 25;
-    var emailAccount = emailAccounts[Math.floor((Math.random() * 49))];
+  var smtpPort = 25;
+  var emailAccount = emailAccounts[Math.floor((Math.random() * 49))];
 
-    //console.log('Try: ' + proxy.ip);
-    var options = {
-      proxy: {
-        ipaddress: proxy.ip, // Random public proxy
-        port: proxy.port,
-        type: proxy.type // type is REQUIRED. Valid types: [4, 5]  (note 4 also works for 4a)
-      },
-      target: {
-        host: mxRecordIp, // can be an ip address or domain (4a and 5 only)
-        port: smtpPort
-      },
-      command: 'connect'  // This defaults to connect, so it's optional if you're not using BIND or Associate.
-    };
+  //console.log('Try: ' + proxy.ip);
+  var options = {
+    proxy: {
+      ipaddress: proxy.ip, // Random public proxy
+      port: proxy.port,
+      type: proxy.type // type is REQUIRED. Valid types: [4, 5]  (note 4 also works for 4a)
+    },
+    target: {
+      host: mxRecordIp, // can be an ip address or domain (4a and 5 only)
+      port: smtpPort
+    },
+    command: 'connect'  // This defaults to connect, so it's optional if you're not using BIND or Associate.
+  };
 
-    if(typeof proxy.username != 'undefined' && proxy.username != null && typeof proxy.password != 'undefined' && proxy.password != null ) {
-      options.proxy.authentication = {
-        username: proxy.username,
-        password: proxy.password
-      }
+  if(typeof proxy.username != 'undefined' && proxy.username != null && typeof proxy.password != 'undefined' && proxy.password != null ) {
+    options.proxy.authentication = {
+      username: proxy.username,
+      password: proxy.password
     }
-
+  }
+  return Bluebird.using(createSocket(options), function(socket) {
     //console.log("mxRecord: " + mxRecordIp);
     console.log(logId + ' Verifying: ' + emailToVerify);
-    Socks.createConnection(options, function (err, socket, info) {
-      console.log(logId + ' got a connection');
-      var responseData = "";
-      if (err) {
-        console.log(logId + ' Error: ' + err);
+    console.log(logId + ' got a connection');
+    var responseData = "";
+    return new Bluebird(function(resolve, reject) {
+      var commands = 0;
+      socket.write('EHLO '+ domain + '\r\n');
+      socket.on('data', function (data) {
+        data = data.toString("utf-8");
+        console.log(data.split("\n").map(function(str) { return logId + ' got data!! ' + str; }).join("\n"));
+        responseData += data;
+        //console.log(data);
+        if(responseData.match(/220/i) != null && commands === 0){
+          commands += 1;
+          socket.write("MAIL FROM: <" + emailAccount.email + ">\r\n");
+        }else if(responseData.match(/250/i) != null && commands > 0){
+          socket.write("rcpt to:<" + emailToVerify + ">\r\n");
+          socket.write("QUIT\r\n");
+        }
+        if(responseData.match(/450 4.2.1/i) != null || responseData.match(/\n5[0-9][0-9](\s|\-)/i) != null){
+          socket.write("QUIT\r\n");
+        }
+
+
+        //If it is clogged you will get 450 4.2.1  https://support.google.com/mail/answer/6592 6si12648809pfe.172 - gsmtp
+        if((responseData.match(/452 4.1.1/i) != null ||responseData.match(/450 4.2.1/i) != null) && responseData.match(/221/i) != null && responseData.match(/250/i) != null && responseData.match(/220/i) != null){
+          console.log(logId + ' Clogged, retry with 452');
+          retryVerification(retry,{emailToVerify: emailToVerify, mxRecordIp: mxRecordIp, retry: retry + 1, provider: 'ovh'}, reject);
+        }
+        else if(responseData.match(/451 4.3.2/) != null) {
+          console.log(logId + ' 451 server error');
+          resolve(false);
+        }
+        //PROXY IS BLOCKED
+        else if(responseData.match(/\n503(\s|\-)/i) != null || (responseData.match(/\n554(\s|\-)/i) != null && responseData.match(/554 5.7.1/)!= null)) {
+          console.log(logId + ' 503 response or 554')
+          emailController.errorMessage(err, data+ ' received a 503 message... Client host rejected: Improper use of SMTP command pipelining... beware and investigate, maybe its because you are using ELHO instead of HELO?: ' + emailToVerify + ' \n domain: '+domain+ ' \n proxy: '+JSON.stringify(proxy));
+          resolve(false);
+        }
+        else if(responseData.match(/spamhaus/i) != null) {
+          console.log(logId + ' Spamhaus')
+          emailController.errorMessage(err, data+ ' Spamhaus violation! Watch out!: ' + emailToVerify + 'domain: '+domain+ 'proxy: '+JSON.stringify(proxy));
+          reject(false);
+        }else if(responseData.match(/\n554(\s|\-)/i) != null && responseData.match(/554 5.7.1/)== null) {
+          emailController.errorMessage(err, data+ ' received a 554 message... either spam or sync error... beware and investigate: ' + emailToVerify + 'domain: '+domain+ 'proxy: '+JSON.stringify(proxy));
+          console.log(logId + ' 554!')
+          reject(false);
+        }else if (responseData.match(/\n5[0-9][0-9](\s|\-)/i) != null && responseData.match(/221/i) != null) { //NOT A VALID EMAIL console.log("Not a valid email: ",emailToVerify)
+          console.log(logId + ' Not a valid email!')
+          resolve(false);
+        } else if (responseData.match(/221/i) != null && responseData.match(/250/i) != null && responseData.match(/220/i) != null) { //VERIFIED!!! :) console.log("Verified: " + emailToVerify);
+          console.log(logId + ' verified!')
+          console.log(logId + ' :: ' + emailToVerify)
+          resolve(emailToVerify);
+        }
+      });
+      socket.on('close', function () {
+        console.log(logId + ' closed!!');
         resolve(false);
-      } else {
-        var commands = 0;
-        socket.write('EHLO '+ domain + '\r\n');
-        socket.on('data', function (data) {
-          data = data.toString("utf-8");
-          console.log(data.split("\n").map(function(str) { return logId + ' got data!! ' + str; }).join("\n"));
-          responseData += data;
-          //console.log(data);
-          if(responseData.match(/220/i) != null && commands === 0){
-            commands += 1;
-            socket.write("MAIL FROM: <" + emailAccount.email + ">\r\n");
-          }else if(responseData.match(/250/i) != null && commands > 0){
-            socket.write("rcpt to:<" + emailToVerify + ">\r\n");
-            socket.write("QUIT\r\n");
-          }
-          if(responseData.match(/450 4.2.1/i) != null || responseData.match(/\n5[0-9][0-9](\s|\-)/i) != null){
-            socket.write("QUIT\r\n");
-          }
+      });
 
+      socket.on('error', function (err) {
+        console.log(logId + ' errored!!');
+        resolve(false);
+      });
 
-          //If it is clogged you will get 450 4.2.1  https://support.google.com/mail/answer/6592 6si12648809pfe.172 - gsmtp
-          if((responseData.match(/452 4.1.1/i) != null ||responseData.match(/450 4.2.1/i) != null) && responseData.match(/221/i) != null && responseData.match(/250/i) != null && responseData.match(/220/i) != null){
-            console.log(logId + ' Clogged, retry with 452');
-            retryVerification(retry,{emailToVerify: emailToVerify, mxRecordIp: mxRecordIp, retry: retry + 1, provider: 'ovh'}, reject);
-          }
-          //PROXY IS BLOCKED
-          else if(responseData.match(/\n503(\s|\-)/i) != null || (responseData.match(/\n554(\s|\-)/i) != null && responseData.match(/554 5.7.1/)!= null)) {
-            console.log(logId + ' 503 response or 554')
-            emailController.errorMessage(err, data+ ' received a 503 message... Client host rejected: Improper use of SMTP command pipelining... beware and investigate, maybe its because you are using ELHO instead of HELO?: ' + emailToVerify + ' \n domain: '+domain+ ' \n proxy: '+JSON.stringify(proxy));
-            resolve(false);
-            socket.destroy();
-          }
-          else if(responseData.match(/spamhaus/i) != null) {
-            console.log(logId + ' Spamhaus')
-            emailController.errorMessage(err, data+ ' Spamhaus violation! Watch out!: ' + emailToVerify + 'domain: '+domain+ 'proxy: '+JSON.stringify(proxy));
-            reject(false);
-          }else if(responseData.match(/\n554(\s|\-)/i) != null && responseData.match(/554 5.7.1/)== null) {
-            emailController.errorMessage(err, data+ ' received a 554 message... either spam or sync error... beware and investigate: ' + emailToVerify + 'domain: '+domain+ 'proxy: '+JSON.stringify(proxy));
-            console.log(logId + ' 554!')
-            reject(false);
-            socket.destroy();
-          }else if (responseData.match(/\n5[0-9][0-9](\s|\-)/i) != null && responseData.match(/221/i) != null) { //NOT A VALID EMAIL console.log("Not a valid email: ",emailToVerify)
-            console.log(logId + ' Not a valid email!')
-            socket.destroy();
-            resolve(false);
-          } else if (responseData.match(/221/i) != null && responseData.match(/250/i) != null && responseData.match(/220/i) != null) { //VERIFIED!!! :) console.log("Verified: " + emailToVerify);
-            socket.destroy();
-            console.log(logId + ' verified!')
-            console.log(logId + ' :: ' + emailToVerify)
-            resolve(emailToVerify);
-          }
-        });
-        socket.on('close', function () {
-          console.log(logId + ' closed!!');
-          socket.destroy();
-        });
-
-        socket.on('error', function (err) {
-          console.log(logId + ' errored!!');
-          socket.destroy();
-        });
-
-        // PLEASE NOTE: sockets need to be resumed before any data will come in or out as they are paused right before this callback is fired.
-        socket.resume();
-      }
-    });
+      // PLEASE NOTE: sockets need to be resumed before any data will come in or out as they are paused right before this callback is fired.
+      socket.resume();
+    }).timeout(15000, 'Timeout');
+  }).catch(function(error) {
+    console.log(logId + ' Error: ' + error);
+    return false;
   }).finally(function(){
     numOpen -= 1;
     console.log(logId + ' tagCloseSocket '+ numOpen);
     open.splice(open.indexOf(logId), 1);
     writeFile(open);
+  });
+}
+
+function createSocket(options) {
+  return Bluebird.fromCallback(function(cb) {
+    Socks.createConnection(options, cb);
+  }).disposer(function(socket) {
+    socket.destroy();
   });
 }
 

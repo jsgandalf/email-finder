@@ -101,7 +101,7 @@ exports.index = function(req, res) {
     domain = utils.purifyDomain(data.toLowerCase());
     return Lead.findOne({firstName: firstName, lastName: lastName, domain: domain}).exec();
   }).then(function(lead) {
-    if (false && typeof lead != 'undefined' && lead != null && moment(lead.created).isAfter(moment().subtract(3, 'months'))) {
+    if (typeof lead != 'undefined' && lead != null && moment(lead.created).isAfter(moment().subtract(3, 'months'))) {
       return Q.when(lead); //console.log('cached');
     } else {
       return guessEmail(firstName, lastName, domain)
