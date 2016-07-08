@@ -60,8 +60,6 @@ var igoogle = function (user, password, host, port, query, start, callback, redi
     requestOptions.headers['Proxy-Authorization'] = 'Basic ' + new Buffer(user + ':' + password).toString('base64');
   }
 
-  console.log(requestOptions)
-
   var reqObject = request(requestOptions, function (err, resp, body) {
     if ((err == null) && resp.statusCode === 200) {
       var $ = cheerio.load(body)
