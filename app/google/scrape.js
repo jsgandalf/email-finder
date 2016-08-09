@@ -30,7 +30,10 @@ var scrape = function (user, password, host, port, url, callback) {
   }
 
   var reqObject = request(requestOptions, function (err, resp, body) {
+    console.log("error down below");
+    console.log(err)
     console.log(resp)
+    console.log(body)
     if ((err == null) && resp.statusCode === 200) {
       var $ = cheerio.load(body)
       var res = {
