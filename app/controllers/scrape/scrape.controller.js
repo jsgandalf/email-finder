@@ -52,7 +52,7 @@ var proxy = {
 //tryGoogle(query,proxy);
 
 exports.index = function(req, res){
-  return getResults("www.linkedin.com/in/realtor-real-estate-agent-samii-6121165a").then(function(data){
+  return getResults(req.body.url).then(function(data){
     console.log(data)
     return res.json(data);
   }).catch(function(err){
