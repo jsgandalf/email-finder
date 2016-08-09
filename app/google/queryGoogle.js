@@ -46,6 +46,7 @@ var igoogle = function (user, password, host, port, query, start, callback, redi
     url: newUrl,
     method: 'GET'
   }
+  console.log(newUrl)
 
   for (var k in google.requestOptions) {
     requestOptions[k] = google.requestOptions[k]
