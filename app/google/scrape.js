@@ -14,7 +14,7 @@ var scrape = function (user, password, host, port, url, callback) {
   var requestOptions = {
     url: url,
     method: 'GET'
-  }
+  };
 
   requestOptions.tunnel = true;
   requestOptions.headers = {

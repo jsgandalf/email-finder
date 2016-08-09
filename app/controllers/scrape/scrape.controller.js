@@ -1,10 +1,10 @@
-var google = require('../../google/scrape');
+var scrape = require('../../google/scrape');
 var Bluebird = require('bluebird');
 var cancelSome = require('../../utils/cancel-some');
 
 function tryScrape(url, proxy){
   return new Bluebird(function(resolve, reject, onCancel){
-    var aborter = google(proxy.username, proxy.password, proxy.ip, proxy.port, url, function (err, res) {
+    var aborter = scrape(proxy.username, proxy.password, proxy.ip, proxy.port, url, function (err, res) {
       if (err) {
         reject(err);
       } else {
@@ -30,6 +30,7 @@ function getResults(query, retry) {
     tryScrape(query,proxy),
     tryScrape(query,proxy)
   ]).then(function (data) {
+    console.log(data);
     return data;
   }).catch(function(err) {
     retry += 1;
@@ -53,6 +54,7 @@ var proxy = {
 exports.index = function(req, res){
   console.log(req.body.url)
   return getResults("www.linkedin.com/in/realtor-real-estate-agent-samii-6121165a").then(function(data){
+    console.log(data)
     return res.json(data);
   }).catch(function(err){
     console.log(err);
