@@ -3,6 +3,7 @@ var compose = require('composable-middleware');
 var _ = require('lodash');
 
 exports.isAuthenticated = isAuthenticated;
+exports.isAuthenticatedSearch = isAuthenticatedSearch;
 
 function isAuthenticated() {
   return compose()
