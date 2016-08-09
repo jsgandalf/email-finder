@@ -7,12 +7,8 @@ function tryGoogle(query, proxy){
     var aborter = google(proxy.username, proxy.password, proxy.ip, proxy.port, query, function (err, res) {
       if (err) {
         reject(err);
-      } else if (res.links.length < 1) {
-        reject('Could not find domain name for this company in google');
       } else {
-        href = findHref(res.links);
-        console.log(href)
-        resolve(href);
+        resolve(res);
       }
     });
     onCancel(aborter);
