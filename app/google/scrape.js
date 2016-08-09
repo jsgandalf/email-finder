@@ -11,6 +11,8 @@ var nextSel = 'td.b a span'
 
 var scrape = function (user, password, host, port, url, callback) {
 
+  console.log(url)
+
   var requestOptions = {
     url: url,
     method: 'GET'
@@ -30,9 +32,7 @@ var scrape = function (user, password, host, port, url, callback) {
     if ((err == null) && resp.statusCode === 200) {
       var $ = cheerio.load(body)
       var res = {
-        url: newUrl,
-        query: query,
-        start: start,
+        url: url,
         links: [],
         $: $,
         body: body
