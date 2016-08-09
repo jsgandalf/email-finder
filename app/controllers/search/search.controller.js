@@ -63,7 +63,7 @@ var proxy = {
 tryGoogle(query,proxy);
 
 exports.index = function(req, res){
-  console.log(req.body.query)
+  console.log(req.body)
   return getResults(req.body.query, req.body.start, 0).then(function(data){
     return res.json(data);
   }).catch(function(err){
