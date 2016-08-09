@@ -15,7 +15,7 @@ function tryScrape(url, proxy){
   });
 }
 
-function getResults(query, retry) {
+function getResults(url, retry) {
   if(typeof retry == 'undefined' || retry == null){
     retry = 0;
   }
@@ -26,16 +26,16 @@ function getResults(query, retry) {
     password: null
   };
   return cancelSome.getFirst([
-    tryScrape(query,proxy),
-    tryScrape(query,proxy),
-    tryScrape(query,proxy)
+    tryScrape(url,proxy),
+    tryScrape(url,proxy),
+    tryScrape(url,proxy)
   ]).then(function (data) {
     console.log(data);
     return data;
   }).catch(function(err) {
     retry += 1;
     if (retry < 2) {
-      return getResults(query, retry);
+      return getResults(url, retry);
     }
   });
 }
@@ -52,7 +52,6 @@ var proxy = {
 //tryGoogle(query,proxy);
 
 exports.index = function(req, res){
-  console.log(req.body.url)
   return getResults("www.linkedin.com/in/realtor-real-estate-agent-samii-6121165a").then(function(data){
     console.log(data)
     return res.json(data);
