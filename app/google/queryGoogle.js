@@ -21,7 +21,7 @@ function google (user, password, host, port, query, start, callback) {
   return igoogle(user, password, host, port, query, startIndex, callback)
 }
 
-google.resultsPerPage = 100;
+google.resultsPerPage = 10;
 google.tld = 'com'
 google.lang = 'en'
 google.requestOptions = {}
