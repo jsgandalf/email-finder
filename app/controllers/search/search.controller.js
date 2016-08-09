@@ -2,20 +2,25 @@ var google = require('../../google/queryGoogle');
 var Bluebird = require('bluebird');
 var cancelSome = require('../../utils/cancel-some');
 
-function tryGoogle(query, proxy){
+function tryGoogle(query, proxy, startIndex){
   return new Bluebird(function(resolve, reject, onCancel){
-    var aborter = google(proxy.username, proxy.password, proxy.ip, proxy.port, query, function (err, res) {
+    if(!startIndex){
+      startIndex = 0;
+    }
+    var aborter = google(proxy.username, proxy.password, proxy.ip, proxy.port, query, startIndex, function (err, res) {
       if (err) {
         reject(err);
+      } else if (res.links.length < 1) {
+        reject('Could not google search');
       } else {
-        resolve(res);
+        resolve(res.links);
       }
     });
     onCancel(aborter);
   });
 }
 
-function getResults(query, retry) {
+function getResults(query, start, retry) {
   if(typeof retry == 'undefined' || retry == null){
     retry = 0;
   }
@@ -26,23 +31,23 @@ function getResults(query, retry) {
     password: null
   };
   return cancelSome.getFirst([
-    tryGoogle(query,proxy),
-    tryGoogle(query,proxy),
-    tryGoogle(query,proxy),
-    tryGoogle(query,proxy),
-    tryGoogle(query,proxy),
-    tryGoogle(query,proxy),
-    tryGoogle(query,proxy),
-    tryGoogle(query,proxy),
-    tryGoogle(query,proxy),
-    tryGoogle(query,proxy)
+    tryGoogle(query,proxy, start),
+    tryGoogle(query,proxy, start),
+    tryGoogle(query,proxy, start),
+    tryGoogle(query,proxy, start),
+    tryGoogle(query,proxy, start),
+    tryGoogle(query,proxy, start),
+    tryGoogle(query,proxy, start),
+    tryGoogle(query,proxy, start),
+    tryGoogle(query,proxy, start),
+    tryGoogle(query,proxy, start)
   ]).then(function (data) {
     console.log(data)
     return data;
   }).catch(function(err) {
     retry += 1;
     if (retry < 2) {
-      return getResults(query, retry);
+      return getResults(query, start, retry);
     }
   });
 }
@@ -59,7 +64,7 @@ var proxy = {
 tryGoogle(query,proxy);
 
 exports.index = function(req, res){
-  return getResults(req.body.query, 0).then(function(data){
+  return getResults(req.body.query, req.body.start, 0).then(function(data){
     console.log(data);
     return res.json(data);
   }).catch(function(err){

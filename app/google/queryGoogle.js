@@ -14,10 +14,8 @@ var nextTextErrorMsg = 'Translate `google.nextText` option to selected language 
 
 // start parameter is optional
 function google (user, password, host, port, query, start, callback) {
-  var startIndex = 0
-  if (typeof callback === 'undefined') {
-    callback = start
-  } else {
+  var startIndex = 0;
+  if (typeof start != 'undefined') {
     startIndex = start
   }
   return igoogle(user, password, host, port, query, startIndex, callback)
