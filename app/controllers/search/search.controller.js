@@ -42,7 +42,6 @@ function getResults(query, start, retry) {
     tryGoogle(query,proxy, start),
     tryGoogle(query,proxy, start)
   ]).then(function (data) {
-    console.log(data)
     return data;
   }).catch(function(err) {
     retry += 1;
@@ -64,8 +63,8 @@ var proxy = {
 tryGoogle(query,proxy);
 
 exports.index = function(req, res){
+  console.log(req.body.query)
   return getResults(req.body.query, req.body.start, 0).then(function(data){
-    console.log(data);
     return res.json(data);
   }).catch(function(err){
     console.log(err);
