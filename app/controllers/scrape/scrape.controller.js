@@ -15,7 +15,7 @@ function tryScrape(url, proxy){
   });
 }
 
-function getResults(query, start, retry) {
+function getResults(query, retry) {
   if(typeof retry == 'undefined' || retry == null){
     retry = 0;
   }
@@ -34,7 +34,7 @@ function getResults(query, start, retry) {
   }).catch(function(err) {
     retry += 1;
     if (retry < 2) {
-      return getResults(query, start, retry);
+      return getResults(query, retry);
     }
   });
 }
