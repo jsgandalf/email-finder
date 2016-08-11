@@ -28,7 +28,8 @@
     "moment": "~2.10.6",
     "socks5-http-client": "1.0.2",
     "node-uuid": "^1.4.7",
-    "sendgrid": "^3.0.5"
+    "sendgrid": "^3.0.5",
+    "phantom": "2.1.14"
   },
   "devDependencies": {
     "gulp": "^3.9.0",

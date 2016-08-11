@@ -1,6 +1,7 @@
 var scrape = require('../../google/scrape');
 var Bluebird = require('bluebird');
 var cancelSome = require('../../utils/cancel-some');
+var phantom = require('phantom');
 
 function tryScrape(url, proxy){
   return new Bluebird(function(resolve, reject, onCancel){
