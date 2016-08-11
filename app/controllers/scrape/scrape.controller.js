@@ -57,7 +57,7 @@ function getProfileHtml(url){
   var phInstance = null;
 
   return phantom
-    .create(["--proxy=108.59.14.208:15124", "--proxy-type=http"])
+    .create(["--proxy=108.59.14.208:13010", "--proxy-type=http"])
     .then(function(instance) {
       phInstance = instance;
       return instance.createPage();
