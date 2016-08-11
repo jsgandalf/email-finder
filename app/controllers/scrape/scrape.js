@@ -5,10 +5,10 @@ var util = require('util');
 var Bluebird = require('bluebird');
 
 var ProfileClass = require("./data-containers/profile");
-var Experience = require("./data-containers/experience");
+/*var Experience = require("./data-containers/experience");
 var Honors = require("./data-containers/honors");
 var Project = require("./data-containers/projects");
-var Education = require("./data-containers/education");
+var Education = require("./data-containers/education");*/
 
 
 var scrape = function (body) {
@@ -31,9 +31,9 @@ var scrape = function (body) {
     profile.websites.push(decodeURIComponent($(this).find("a[href]").attr("href").replace("https://www.linkedin.com/redir/redirect?url=", "")));
   });
 
-  $("tr[data-section='educationsDetails'] td ol li").each(function() {
+  /*$("tr[data-section='educationsDetails'] td ol li").each(function() {
     profile.educationlist.push(new Education($(this).text()));
-  });
+  });*/
 
   return Bluebird.resolve(profile);
 
