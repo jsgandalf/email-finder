@@ -21,6 +21,7 @@ var scrape = function (body) {
   var $ = cheerio.load(body);
   var profile = new ProfileClass();
   profile.name = $("#name h1 span span").text();
+  console.log(profile.name)
   profile.headline = $("#headline p").text();
   profile.location = $("#location dl dd span").text();
   profile.current = $("#overview-summary-current td ol li a").text();

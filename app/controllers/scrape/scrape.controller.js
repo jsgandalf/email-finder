@@ -34,10 +34,14 @@ function getProfileHtml(url){
     });
 }
 
+scrape("aaa").then(function(data){
+  console.log(data)
+})
+
 exports.index = function(req, res){
   return getProfileHtml(req.body.url).then(function(data) {
-    return scrape(data)
-  }).then(function(data){
+    console.log(data);
+    //return scrape(data).then(function(data){
     console.log(data);
     return res.json(data);
   }).catch(function(err){

@@ -9,6 +9,7 @@ module.exports = function (app) {
   app.use('/api', router);
 };
 
+
 router.get('/v1/guess', auth.isAuthenticated(), FinderCtrl.index);
 
 router.post('/v1/search', auth.isAuthenticatedSearch(), SearchCtrl.index);
