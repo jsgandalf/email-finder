@@ -16,7 +16,7 @@ var scrape = function (body) {
   var $ = cheerio.load(body);
   var profile = new ProfileClass();
   profile.name = $("#name").text();
-  console.log(profile.name)
+
   profile.headline = $("p.headline[data-section='headline']").text();
   profile.location = $("span.locality").text();
   profile.current = $("tr[data-section='currentPositionsDetails'] td").text();
@@ -28,7 +28,7 @@ var scrape = function (body) {
 
   profile.education = $("tr[data-section='educationsDetails'] td").text();
   $("tr[data-section='websites'] td").each(function() {
-    profile.websites.push($(this).find("a[href]").attr("href"));
+    profile.websites.push(decodeURIComponent($(this).find("a[href]").attr("href").replace("https://www.linkedin.com/redir/redirect?url=", "")));
   });
 
   $("tr[data-section='educationsDetails'] td ol li").each(function() {
