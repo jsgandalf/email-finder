@@ -8,7 +8,7 @@ function getProfileHtml(url){
   var phInstance = null;
 
   return phantom
-    .create() //["--proxy=108.59.14.208:13010", "--proxy-type=http"]
+    .create(["--proxy=108.59.14.208:13010", "--proxy-type=http"])
     .then(function(instance) {
       phInstance = instance;
       return instance.createPage();
@@ -36,6 +36,7 @@ function getProfileHtml(url){
 
 exports.index = function(req, res){
   return getProfileHtml(req.body.url).then(function(data) {
+    console.log(data);
     return scrape(data);
   }).then(function(data){
     console.log(data);
