@@ -2,6 +2,7 @@ var request = require('request')
 var cheerio = require('cheerio')
 var querystring = require('querystring');
 var util = require('util');
+var Bluebird = require('bluebird');
 
 var ProfileClass = require("./data-containers/profile");
 var Experience = require("./data-containers/experience");
