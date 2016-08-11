@@ -1,4 +1,4 @@
-var scrape = require('../../google/scrape');
+var scrape = require('./scrape');
 var Bluebird = require('bluebird');
 var cancelSome = require('../../utils/cancel-some');
 var phantom = require('phantom');
