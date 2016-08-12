@@ -1,6 +1,5 @@
 var request = require('request')
 var cheerio = require('cheerio')
-var querystring = require('querystring');
 var util = require('util');
 var Bluebird = require('bluebird');
 
@@ -37,6 +36,6 @@ var scrape = function (body) {
 
   return Bluebird.resolve(profile);
 
-}
+};
 
 module.exports = scrape;

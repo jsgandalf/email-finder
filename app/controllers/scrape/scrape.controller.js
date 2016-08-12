@@ -34,11 +34,23 @@ function getProfileHtml(url){
     });
 }
 
-exports.index = function(req, res){
-  return getProfileHtml(req.body.url).then(function(data) {
-    console.log(data);
+function getProfile(url, retry){
+  if(!retry){
+    retry = 0;
+  }
+  return getProfileHtml(url).then(function(data) {
     return scrape(data);
   }).then(function(data){
+    if(data.current == "" && retry < 4){
+      retry += 1;
+      return getProfile(req.body.url, retry);
+    }
+    return data;
+  });
+}
+
+exports.index = function(req, res){
+  return getProfile(req.body.url).then(function(data){
     console.log(data);
     return res.json(data);
   }).catch(function(err){
