@@ -51,7 +51,6 @@ function getProfile(url, retry){
 
 exports.index = function(req, res){
   return getProfile(req.body.url).then(function(data){
-    console.log(data);
     return res.json(data);
   }).catch(function(err){
     console.log(err);
