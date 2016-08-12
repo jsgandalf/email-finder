@@ -43,7 +43,7 @@ function getProfile(url, retry){
   }).then(function(data){
     if(data.current == "" && retry < 4){
       retry += 1;
-      return getProfile(req.body.url, retry);
+      return getProfile(url, retry);
     }
     return data;
   });
