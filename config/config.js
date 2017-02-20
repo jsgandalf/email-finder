@@ -41,7 +41,7 @@ var all = {
   companyPhone: '(425) 633-6351', //Current phone number in emails and other places.
   systemEmail: 'support@gatorleads.com',
   systemName: 'Rachel Swenson',
-  developerEmail: 'sean@messagesumo.com',
+  developerEmail: 'nicole@yourgrandexperiment.com',
   apiKey: 'UZE6pY5Yz6z3ektV:NEgYhceNtJaee3ga:H5TYvG57F2dzJF7G' + 'invalidkey',
   privateProxyUsername: "s5",
   privateProxyPassword: "aukiej5ish",

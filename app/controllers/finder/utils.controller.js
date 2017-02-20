@@ -156,7 +156,7 @@ function purifyDomain2(domain){
   return domain.trim();
 }
 
-
+/* anything above 79 is a pass */
 function formatResponse(verifiedEmails, firstName, lastName, domain, patterns){
   var saveLead = false;
   var emails = _.filter(verifiedEmails, function (email) {

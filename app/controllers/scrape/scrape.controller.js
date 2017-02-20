@@ -41,7 +41,7 @@ function getProfile(url, retry){
   return getProfileHtml(url).then(function(data) {
     return scrape(data);
   }).then(function(data){
-    if(data.current == "" && retry < 4){
+    if(data.current == "" && retry < 10){
       retry += 1;
       return getProfile(url, retry);
     }

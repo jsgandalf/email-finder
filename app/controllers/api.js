@@ -9,7 +9,13 @@ module.exports = function (app) {
   app.use('/api', router);
 };
 
+/*
 
+  domain - the domain or company name
+  first - the first name
+  last - the last name
+
+ */
 router.get('/v1/guess', auth.isAuthenticated(), FinderCtrl.index);
 
 router.post('/v1/search', auth.isAuthenticatedSearch(), SearchCtrl.index);
