@@ -92,6 +92,8 @@ var numIncoming = 0;
 exports.index = function(req, res) {
   numIncoming += 1;
 
+  console.log(req.query)
+
   console.log('tagIncoming ' + numIncoming);
   var domain = utils.purifyDomain(req.query.domain),
     firstName = utils.cleanFirst(utils.purifyName(req.query.first)),

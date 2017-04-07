@@ -132,6 +132,7 @@ function purifyName(str){
 
 function purifyDomain(url) {
   var domain;
+  console.log(url)
   //find & remove protocol (http, ftp, etc.) and get domain
   if (url.indexOf("://") > -1) {
     domain = url.split('/')[2];
