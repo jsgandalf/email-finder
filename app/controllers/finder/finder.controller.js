@@ -111,10 +111,15 @@ exports.index = function(req, res) {
   }).then(function(lead) {
     //console.log(lead)
     return res.json(lead);
-  }).catch(function (err) {
+  }).done()
+  /*.catch(function (err) {
     console.log(err)
     return utils.handleError(err, res, firstName, lastName, domain);
-  });/*.finally(function(){
+  });*/
+
+
+
+  /*.finally(function(){
     numIncoming -= 1;
     console.log('tagResolving ' + numIncoming);
   }).done();*/
