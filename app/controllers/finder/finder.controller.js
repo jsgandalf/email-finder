@@ -94,11 +94,13 @@ exports.index = function(req, res) {
 
   console.log('tagIncoming ' + numIncoming);
   var domain = utils.purifyDomain(req.query.domain),
-    firstName = utils.cleanFirst(utils.purifyName(req.query.first)).toLowerCase(),
-    lastName = utils.cleanLast(utils.purifyName(req.query.last)).toLowerCase();
-
+    firstName = utils.cleanFirst(utils.purifyName(req.query.first)),
+    lastName = utils.cleanLast(utils.purifyName(req.query.last));
+  firstName = firstName ? firstName.toLowerCase() : firstName;
+  lastName = lastName ? lastName.toLowerCase() : lastName;
   findCompanyUrl(domain).then(function(data) {
-    domain = utils.purifyDomain(data.toLowerCase());
+    data = data ? data.toLowerCase() : data;
+    domain = utils.purifyDomain(data);
     return Lead.findOne({firstName: firstName, lastName: lastName, domain: domain}).exec();
   }).then(function(lead) {
     if (typeof lead != 'undefined' && lead != null && moment(lead.created).isAfter(moment().subtract(3, 'months'))) {
