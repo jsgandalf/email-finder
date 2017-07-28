@@ -1,0 +1,333 @@
+0 info it worked if it ends with ok
+1 verbose cli [ '/Users/seanthomas/.nvm/versions/node/v4.4.7/bin/node',
+1 verbose cli   '/Users/seanthomas/.nvm/versions/node/v4.4.7/bin/npm',
+1 verbose cli   'install',
+1 verbose cli   'pm2',
+1 verbose cli   '-g' ]
+2 info using npm@2.15.8
+3 info using node@v4.4.7
+4 verbose install initial load of /Users/seanthomas/.nvm/versions/node/v4.4.7/lib/package.json
+5 verbose readDependencies loading dependencies from /Users/seanthomas/.nvm/versions/node/v4.4.7/lib/package.json
+6 silly cache add args [ 'pm2', null ]
+7 verbose cache add spec pm2
+8 silly cache add parsed spec Result {
+8 silly cache add   raw: 'pm2',
+8 silly cache add   scope: null,
+8 silly cache add   name: 'pm2',
+8 silly cache add   rawSpec: '',
+8 silly cache add   spec: 'latest',
+8 silly cache add   type: 'tag' }
+9 silly addNamed pm2@latest
+10 verbose addNamed "latest" is being treated as a dist-tag for pm2
+11 info addNameTag [ 'pm2', 'latest' ]
+12 silly mapToRegistry name pm2
+13 silly mapToRegistry using default registry
+14 silly mapToRegistry registry https://registry.npmjs.org/
+15 silly mapToRegistry data Result {
+15 silly mapToRegistry   raw: 'pm2',
+15 silly mapToRegistry   scope: null,
+15 silly mapToRegistry   name: 'pm2',
+15 silly mapToRegistry   rawSpec: '',
+15 silly mapToRegistry   spec: 'latest',
+15 silly mapToRegistry   type: 'tag' }
+16 silly mapToRegistry uri https://registry.npmjs.org/pm2
+17 verbose addNameTag registry:https://registry.npmjs.org/pm2 not in flight; fetching
+18 verbose request uri https://registry.npmjs.org/pm2
+19 verbose request no auth needed
+20 info attempt registry request try #1 at 4:34:43 PM
+21 verbose request id cade56ebc1d5edee
+22 verbose etag W/"5877a143-79aeb"
+23 verbose lastModified Thu, 12 Jan 2017 15:31:15 GMT
+24 http request GET https://registry.npmjs.org/pm2
+25 http 200 https://registry.npmjs.org/pm2
+26 verbose headers { server: 'nginx/1.10.1',
+26 verbose headers   'content-type': 'application/json',
+26 verbose headers   'last-modified': 'Wed, 26 Jul 2017 21:59:11 GMT',
+26 verbose headers   etag: 'W/"597910af-8ebee"',
+26 verbose headers   'content-encoding': 'gzip',
+26 verbose headers   'cache-control': 'max-age=300',
+26 verbose headers   'content-length': '35300',
+26 verbose headers   'accept-ranges': 'bytes',
+26 verbose headers   date: 'Thu, 27 Jul 2017 22:34:43 GMT',
+26 verbose headers   via: '1.1 varnish',
+26 verbose headers   age: '0',
+26 verbose headers   connection: 'keep-alive',
+26 verbose headers   'x-served-by': 'cache-den6022-DEN',
+26 verbose headers   'x-cache': 'MISS',
+26 verbose headers   'x-cache-hits': '0',
+26 verbose headers   'x-timer': 'S1501194883.365224,VS0,VE242',
+26 verbose headers   vary: 'Accept-Encoding, Accept' }
+27 silly get cb [ 200,
+27 silly get   { server: 'nginx/1.10.1',
+27 silly get     'content-type': 'application/json',
+27 silly get     'last-modified': 'Wed, 26 Jul 2017 21:59:11 GMT',
+27 silly get     etag: 'W/"597910af-8ebee"',
+27 silly get     'content-encoding': 'gzip',
+27 silly get     'cache-control': 'max-age=300',
+27 silly get     'content-length': '35300',
+27 silly get     'accept-ranges': 'bytes',
+27 silly get     date: 'Thu, 27 Jul 2017 22:34:43 GMT',
+27 silly get     via: '1.1 varnish',
+27 silly get     age: '0',
+27 silly get     connection: 'keep-alive',
+27 silly get     'x-served-by': 'cache-den6022-DEN',
+27 silly get     'x-cache': 'MISS',
+27 silly get     'x-cache-hits': '0',
+27 silly get     'x-timer': 'S1501194883.365224,VS0,VE242',
+27 silly get     vary: 'Accept-Encoding, Accept' } ]
+28 verbose get saving pm2 to /Users/seanthomas/.npm/registry.npmjs.org/pm2/.cache.json
+29 verbose correctMkdir /Users/seanthomas/.npm correctMkdir not in flight; initializing
+30 silly addNameTag next cb for pm2 with tag latest
+31 silly addNamed pm2@2.6.1
+32 verbose addNamed "2.6.1" is a plain semver version for pm2
+33 silly mapToRegistry name pm2
+34 silly mapToRegistry using default registry
+35 silly mapToRegistry registry https://registry.npmjs.org/
+36 silly mapToRegistry data Result {
+36 silly mapToRegistry   raw: 'pm2',
+36 silly mapToRegistry   scope: null,
+36 silly mapToRegistry   name: 'pm2',
+36 silly mapToRegistry   rawSpec: '',
+36 silly mapToRegistry   spec: 'latest',
+36 silly mapToRegistry   type: 'tag' }
+37 silly mapToRegistry uri https://registry.npmjs.org/pm2
+38 verbose addRemoteTarball https://registry.npmjs.org/pm2/-/pm2-2.6.1.tgz not in flight; adding
+39 verbose addRemoteTarball [ 'https://registry.npmjs.org/pm2/-/pm2-2.6.1.tgz',
+39 verbose addRemoteTarball   'a9c2fdb7bf1676655935eb4176239003fca5c8da' ]
+40 info retry fetch attempt 1 at 4:34:43 PM
+41 info attempt registry request try #1 at 4:34:43 PM
+42 http fetch GET https://registry.npmjs.org/pm2/-/pm2-2.6.1.tgz
+43 http fetch 200 https://registry.npmjs.org/pm2/-/pm2-2.6.1.tgz
+44 silly fetchAndShaCheck shasum a9c2fdb7bf1676655935eb4176239003fca5c8da
+45 verbose addTmpTarball /var/folders/gm/00slnfr565gb253wwv4r58b00000gn/T/npm-85289-32a1764c/registry.npmjs.org/pm2/-/pm2-2.6.1.tgz not in flight; adding
+46 verbose addTmpTarball already have metadata; skipping unpack for pm2@2.6.1
+47 verbose correctMkdir /Users/seanthomas/.npm correctMkdir not in flight; initializing
+48 silly cache afterAdd pm2@2.6.1
+49 verbose afterAdd /Users/seanthomas/.npm/pm2/2.6.1/package/package.json not in flight; writing
+50 verbose correctMkdir /Users/seanthomas/.npm correctMkdir not in flight; initializing
+51 verbose afterAdd /Users/seanthomas/.npm/pm2/2.6.1/package/package.json written
+52 silly install resolved [ { name: 'pm2',
+52 silly install resolved     preferGlobal: true,
+52 silly install resolved     version: '2.6.1',
+52 silly install resolved     engines: { node: '>=0.12' },
+52 silly install resolved     directories: { bin: './bin', lib: './lib', example: './examples' },
+52 silly install resolved     author:
+52 silly install resolved      { name: 'Strzelewicz Alexandre',
+52 silly install resolved        email: 'alexandre@keymetrics.io',
+52 silly install resolved        url: 'https://keymetrics.io' },
+52 silly install resolved     maintainers: [ [Object] ],
+52 silly install resolved     contributors:
+52 silly install resolved      [ [Object],
+52 silly install resolved        [Object],
+52 silly install resolved        [Object],
+52 silly install resolved        [Object],
+52 silly install resolved        [Object],
+52 silly install resolved        [Object],
+52 silly install resolved        [Object],
+52 silly install resolved        [Object],
+52 silly install resolved        [Object],
+52 silly install resolved        [Object],
+52 silly install resolved        [Object],
+52 silly install resolved        [Object],
+52 silly install resolved        [Object] ],
+52 silly install resolved     homepage: 'http://pm2.io/',
+52 silly install resolved     description: 'Production process manager for Node.JS applications with a built-in load balancer.',
+52 silly install resolved     main: 'index.js',
+52 silly install resolved     scripts:
+52 silly install resolved      { test: 'NODE_ENV=test bash test/pm2_programmatic_tests.sh && NODE_ENV=test bash test/pm2_behavior_tests.sh',
+52 silly install resolved        'bench-pmx': 'pm2 delete all; pm2 install pm2-probe; node examples/pmx/app.js; pm2 ls' },
+52 silly install resolved     keywords:
+52 silly install resolved      [ 'cli',
+52 silly install resolved        'fault tolerant',
+52 silly install resolved        'sysadmin',
+52 silly install resolved        'tools',
+52 silly install resolved        'pm2',
+52 silly install resolved        'logs',
+52 silly install resolved        'log',
+52 silly install resolved        'json',
+52 silly install resolved        'express',
+52 silly install resolved        'hapi',
+52 silly install resolved        'kraken',
+52 silly install resolved        'reload',
+52 silly install resolved        'microservice',
+52 silly install resolved        'programmatic',
+52 silly install resolved        'harmony',
+52 silly install resolved        'node-pm2',
+52 silly install resolved        'production',
+52 silly install resolved        'keymetrics',
+52 silly install resolved        'node.js monitoring',
+52 silly install resolved        'strong-pm',
+52 silly install resolved        'deploy',
+52 silly install resolved        'deployment',
+52 silly install resolved        'daemon',
+52 silly install resolved        'supervisor',
+52 silly install resolved        'nodemon',
+52 silly install resolved        'pm2.io',
+52 silly install resolved        'ghost',
+52 silly install resolved        'ghost production',
+52 silly install resolved        'monitoring',
+52 silly install resolved        'process manager',
+52 silly install resolved        'forever',
+52 silly install resolved        'profiling',
+52 silly install resolved        'probes',
+52 silly install resolved        'forever-monitor',
+52 silly install resolved        'keep process alive',
+52 silly install resolved        'process configuration',
+52 silly install resolved        'clustering',
+52 silly install resolved        'cluster cli',
+52 silly install resolved        'cluster',
+52 silly install resolved        'cron',
+52 silly install resolved        'devops',
+52 silly install resolved        'dev ops' ],
+52 silly install resolved     bin:
+52 silly install resolved      { pm2: './bin/pm2',
+52 silly install resolved        'pm2-dev': './bin/pm2-dev',
+52 silly install resolved        'pm2-docker': './bin/pm2-docker',
+52 silly install resolved        'pm2-runtime': './bin/pm2-runtime' },
+52 silly install resolved     dependencies:
+52 silly install resolved      { async: '^2.5',
+52 silly install resolved        blessed: '^0.1.81',
+52 silly install resolved        chalk: '^1.1',
+52 silly install resolved        chokidar: '^1.7',
+52 silly install resolved        'cli-table-redemption': '^1.0.0',
+52 silly install resolved        commander: '2.11.0',
+52 silly install resolved        cron: '1.2.1',
+52 silly install resolved        debug: '^2.6',
+52 silly install resolved        eventemitter2: '1.0.5',
+52 silly install resolved        fclone: '1.0.11',
+52 silly install resolved        mkdirp: '0.5.1',
+52 silly install resolved        moment: '^2.18',
+52 silly install resolved        nssocket: '0.6.0',
+52 silly install resolved        pidusage: '^1.1.0',
+52 silly install resolved        'pm2-axon': '3.0.2',
+52 silly install resolved        'pm2-axon-rpc': '0.4.5',
+52 silly install resolved        'pm2-deploy': '^0.3.5',
+52 silly install resolved        'pm2-multimeter': '^0.1.2',
+52 silly install resolved        pmx: '^1.2.0',
+52 silly install resolved        semver: '^5.3',
+52 silly install resolved        shelljs: '0.7.8',
+52 silly install resolved        'source-map-support': '^0.4.15',
+52 silly install resolved        'sprintf-js': '1.1.1',
+52 silly install resolved        vizion: '^0.2',
+52 silly install resolved        yamljs: '0.3.0',
+52 silly install resolved        needle: '1.6.0',
+52 silly install resolved        promptly: '2.2.0',
+52 silly install resolved        gkt: 'https://tgz.pm2.io/gkt-1.0.0.tgz' },
+52 silly install resolved     devDependencies: { mocha: '^3', should: '^11' },
+52 silly install resolved     optionalDependencies: { gkt: 'https://tgz.pm2.io/gkt-1.0.0.tgz' },
+52 silly install resolved     bugs: { url: 'https://github.com/Unitech/pm2/issues' },
+52 silly install resolved     repository: { type: 'git', url: 'git://github.com/Unitech/pm2.git' },
+52 silly install resolved     license: 'AGPL-3.0',
+52 silly install resolved     gitHead: '054c4ed56e7557364e9d4cf41c31e85a093a4456',
+52 silly install resolved     _id: 'pm2@2.6.1',
+52 silly install resolved     _npmVersion: '5.3.0',
+52 silly install resolved     _nodeVersion: '8.1.4',
+52 silly install resolved     _npmUser: { name: 'tknew', email: 'strzelewicz.alexandre@gmail.com' },
+52 silly install resolved     dist:
+52 silly install resolved      { integrity: 'sha512-eJKj0pJ1usukfduuSMyQxN3wVBszwiPl+R6FmZCbxwkhH9BI8zZ+WHOi9R5m8k6AowrU5c8/SgT0Xr+J6Y2EAA==',
+52 silly install resolved        shasum: 'a9c2fdb7bf1676655935eb4176239003fca5c8da',
+52 silly install resolved        tarball: 'https://registry.npmjs.org/pm2/-/pm2-2.6.1.tgz' },
+52 silly install resolved     _npmOperationalInternal:
+52 silly install resolved      { host: 's3://npm-registry-packages',
+52 silly install resolved        tmp: 'tmp/pm2-2.6.1.tgz_1500553460127_0.558803508291021' },
+52 silly install resolved     _shasum: 'a9c2fdb7bf1676655935eb4176239003fca5c8da',
+52 silly install resolved     _resolved: 'https://registry.npmjs.org/pm2/-/pm2-2.6.1.tgz',
+52 silly install resolved     _from: 'pm2@latest' } ]
+53 info install pm2@2.6.1 into /Users/seanthomas/.nvm/versions/node/v4.4.7/lib
+54 info installOne pm2@2.6.1
+55 verbose installOne of pm2 to /Users/seanthomas/.nvm/versions/node/v4.4.7/lib not in flight; installing
+56 verbose correctMkdir /Users/seanthomas/.npm/_locks correctMkdir not in flight; initializing
+57 verbose lock using /Users/seanthomas/.npm/_locks/pm2-4be154065133712e.lock for /Users/seanthomas/.nvm/versions/node/v4.4.7/lib/node_modules/pm2
+58 silly install write writing pm2 2.6.1 to /Users/seanthomas/.nvm/versions/node/v4.4.7/lib/node_modules/pm2
+59 verbose unbuild lib/node_modules/pm2
+60 info preuninstall pm2@2.2.3
+61 info uninstall pm2@2.2.3
+62 verbose unbuild rmStuff pm2@2.2.3 from /Users/seanthomas/.nvm/versions/node/v4.4.7/lib/node_modules
+63 silly gentlyRm /Users/seanthomas/.nvm/versions/node/v4.4.7/bin/pm2 is being gently removed
+64 silly gentlyRm verifying /Users/seanthomas/.nvm/versions/node/v4.4.7 is an npm working directory
+65 silly gentlyRm /Users/seanthomas/.nvm/versions/node/v4.4.7/bin/rundev is being gently removed
+66 silly gentlyRm verifying /Users/seanthomas/.nvm/versions/node/v4.4.7 is an npm working directory
+67 silly gentlyRm /Users/seanthomas/.nvm/versions/node/v4.4.7/bin/pm2-dev is being gently removed
+68 silly gentlyRm verifying /Users/seanthomas/.nvm/versions/node/v4.4.7 is an npm working directory
+69 silly gentlyRm /Users/seanthomas/.nvm/versions/node/v4.4.7/bin/pm2-docker is being gently removed
+70 silly gentlyRm verifying /Users/seanthomas/.nvm/versions/node/v4.4.7 is an npm working directory
+71 silly gentlyRm containing path /Users/seanthomas/.nvm/versions/node/v4.4.7 is under npm's control, in /Users/seanthomas/.nvm/versions/node/v4.4.7
+72 silly gentlyRm deletion target /Users/seanthomas/.nvm/versions/node/v4.4.7/bin/pm2 is under /Users/seanthomas/.nvm/versions/node/v4.4.7
+73 verbose gentlyRm vacuuming from /Users/seanthomas/.nvm/versions/node/v4.4.7/bin/pm2 up to /Users/seanthomas/.nvm/versions/node/v4.4.7
+74 silly gentlyRm containing path /Users/seanthomas/.nvm/versions/node/v4.4.7 is under npm's control, in /Users/seanthomas/.nvm/versions/node/v4.4.7
+75 silly gentlyRm deletion target /Users/seanthomas/.nvm/versions/node/v4.4.7/bin/rundev is under /Users/seanthomas/.nvm/versions/node/v4.4.7
+76 verbose gentlyRm vacuuming from /Users/seanthomas/.nvm/versions/node/v4.4.7/bin/rundev up to /Users/seanthomas/.nvm/versions/node/v4.4.7
+77 silly gentlyRm containing path /Users/seanthomas/.nvm/versions/node/v4.4.7 is under npm's control, in /Users/seanthomas/.nvm/versions/node/v4.4.7
+78 silly gentlyRm deletion target /Users/seanthomas/.nvm/versions/node/v4.4.7/bin/pm2-dev is under /Users/seanthomas/.nvm/versions/node/v4.4.7
+79 verbose gentlyRm vacuuming from /Users/seanthomas/.nvm/versions/node/v4.4.7/bin/pm2-dev up to /Users/seanthomas/.nvm/versions/node/v4.4.7
+80 silly gentlyRm containing path /Users/seanthomas/.nvm/versions/node/v4.4.7 is under npm's control, in /Users/seanthomas/.nvm/versions/node/v4.4.7
+81 silly gentlyRm deletion target /Users/seanthomas/.nvm/versions/node/v4.4.7/bin/pm2-docker is under /Users/seanthomas/.nvm/versions/node/v4.4.7
+82 verbose gentlyRm vacuuming from /Users/seanthomas/.nvm/versions/node/v4.4.7/bin/pm2-docker up to /Users/seanthomas/.nvm/versions/node/v4.4.7
+83 silly vacuum-fs removing /Users/seanthomas/.nvm/versions/node/v4.4.7/bin/pm2
+84 silly vacuum-fs removing /Users/seanthomas/.nvm/versions/node/v4.4.7/bin/rundev
+85 silly vacuum-fs removing /Users/seanthomas/.nvm/versions/node/v4.4.7/bin/pm2-dev
+86 silly vacuum-fs removing /Users/seanthomas/.nvm/versions/node/v4.4.7/bin/pm2-docker
+87 silly vacuum-fs quitting because other entries in /Users/seanthomas/.nvm/versions/node/v4.4.7/bin
+88 silly vacuum-fs quitting because other entries in /Users/seanthomas/.nvm/versions/node/v4.4.7/bin
+89 silly vacuum-fs quitting because other entries in /Users/seanthomas/.nvm/versions/node/v4.4.7/bin
+90 silly vacuum-fs quitting because other entries in /Users/seanthomas/.nvm/versions/node/v4.4.7/bin
+91 info postuninstall pm2@2.2.3
+92 silly gentlyRm /Users/seanthomas/.nvm/versions/node/v4.4.7/lib/node_modules/pm2 is being purged from base /Users/seanthomas/.nvm/versions/node/v4.4.7
+93 verbose gentlyRm don't care about contents; nuking /Users/seanthomas/.nvm/versions/node/v4.4.7/lib/node_modules/pm2
+94 silly vacuum-fs purging /Users/seanthomas/.nvm/versions/node/v4.4.7/lib/node_modules/pm2
+95 verbose unlock done using /Users/seanthomas/.npm/_locks/pm2-4be154065133712e.lock for /Users/seanthomas/.nvm/versions/node/v4.4.7/lib/node_modules/pm2
+96 verbose stack Error: EACCES: permission denied, unlink '/Users/seanthomas/.nvm/versions/node/v4.4.7/lib/node_modules/pm2/.editorconfig'
+96 verbose stack     at Error (native)
+97 verbose cwd /Users/seanthomas/Documents/gator-leads-email
+98 error Darwin 16.0.0
+99 error argv "/Users/seanthomas/.nvm/versions/node/v4.4.7/bin/node" "/Users/seanthomas/.nvm/versions/node/v4.4.7/bin/npm" "install" "pm2" "-g"
+100 error node v4.4.7
+101 error npm  v2.15.8
+102 error path /Users/seanthomas/.nvm/versions/node/v4.4.7/lib/node_modules/pm2/.editorconfig
+103 error code EACCES
+104 error errno -13
+105 error syscall unlink
+106 error Error: EACCES: permission denied, unlink '/Users/seanthomas/.nvm/versions/node/v4.4.7/lib/node_modules/pm2/.editorconfig'
+106 error     at Error (native)
+106 error  { [Error: EACCES: permission denied, unlink '/Users/seanthomas/.nvm/versions/node/v4.4.7/lib/node_modules/pm2/.editorconfig']
+106 error   errno: -13,
+106 error   code: 'EACCES',
+106 error   syscall: 'unlink',
+106 error   path: '/Users/seanthomas/.nvm/versions/node/v4.4.7/lib/node_modules/pm2/.editorconfig' }
+107 error Please try running this command again as root/Administrator.
+108 verbose exit [ -13, true ]
+109 verbose unbuild lib/node_modules/pm2
+110 info preuninstall pm2@2.2.3
+111 info uninstall pm2@2.2.3
+112 verbose unbuild rmStuff pm2@2.2.3 from /Users/seanthomas/.nvm/versions/node/v4.4.7/lib/node_modules
+113 silly gentlyRm /Users/seanthomas/.nvm/versions/node/v4.4.7/bin/pm2 is being gently removed
+114 silly gentlyRm verifying /Users/seanthomas/.nvm/versions/node/v4.4.7 is an npm working directory
+115 silly gentlyRm /Users/seanthomas/.nvm/versions/node/v4.4.7/bin/rundev is being gently removed
+116 silly gentlyRm verifying /Users/seanthomas/.nvm/versions/node/v4.4.7 is an npm working directory
+117 silly gentlyRm /Users/seanthomas/.nvm/versions/node/v4.4.7/bin/pm2-dev is being gently removed
+118 silly gentlyRm verifying /Users/seanthomas/.nvm/versions/node/v4.4.7 is an npm working directory
+119 silly gentlyRm /Users/seanthomas/.nvm/versions/node/v4.4.7/bin/pm2-docker is being gently removed
+120 silly gentlyRm verifying /Users/seanthomas/.nvm/versions/node/v4.4.7 is an npm working directory
+121 silly gentlyRm containing path /Users/seanthomas/.nvm/versions/node/v4.4.7 is under npm's control, in /Users/seanthomas/.nvm/versions/node/v4.4.7
+122 silly gentlyRm deletion target /Users/seanthomas/.nvm/versions/node/v4.4.7/bin/pm2 is under /Users/seanthomas/.nvm/versions/node/v4.4.7
+123 verbose gentlyRm vacuuming from /Users/seanthomas/.nvm/versions/node/v4.4.7/bin/pm2 up to /Users/seanthomas/.nvm/versions/node/v4.4.7
+124 silly gentlyRm containing path /Users/seanthomas/.nvm/versions/node/v4.4.7 is under npm's control, in /Users/seanthomas/.nvm/versions/node/v4.4.7
+125 silly gentlyRm deletion target /Users/seanthomas/.nvm/versions/node/v4.4.7/bin/rundev is under /Users/seanthomas/.nvm/versions/node/v4.4.7
+126 verbose gentlyRm vacuuming from /Users/seanthomas/.nvm/versions/node/v4.4.7/bin/rundev up to /Users/seanthomas/.nvm/versions/node/v4.4.7
+127 silly gentlyRm containing path /Users/seanthomas/.nvm/versions/node/v4.4.7 is under npm's control, in /Users/seanthomas/.nvm/versions/node/v4.4.7
+128 silly gentlyRm deletion target /Users/seanthomas/.nvm/versions/node/v4.4.7/bin/pm2-dev is under /Users/seanthomas/.nvm/versions/node/v4.4.7
+129 verbose gentlyRm vacuuming from /Users/seanthomas/.nvm/versions/node/v4.4.7/bin/pm2-dev up to /Users/seanthomas/.nvm/versions/node/v4.4.7
+130 silly gentlyRm containing path /Users/seanthomas/.nvm/versions/node/v4.4.7 is under npm's control, in /Users/seanthomas/.nvm/versions/node/v4.4.7
+131 silly gentlyRm deletion target /Users/seanthomas/.nvm/versions/node/v4.4.7/bin/pm2-docker is under /Users/seanthomas/.nvm/versions/node/v4.4.7
+132 verbose gentlyRm vacuuming from /Users/seanthomas/.nvm/versions/node/v4.4.7/bin/pm2-docker up to /Users/seanthomas/.nvm/versions/node/v4.4.7
+133 info postuninstall pm2@2.2.3
+134 silly gentlyRm /Users/seanthomas/.nvm/versions/node/v4.4.7/lib/node_modules/pm2 is being purged from base /Users/seanthomas/.nvm/versions/node/v4.4.7
+135 verbose gentlyRm don't care about contents; nuking /Users/seanthomas/.nvm/versions/node/v4.4.7/lib/node_modules/pm2
+136 silly vacuum-fs purging /Users/seanthomas/.nvm/versions/node/v4.4.7/lib/node_modules/pm2
+137 error error rolling back Error: EACCES: permission denied, unlink '/Users/seanthomas/.nvm/versions/node/v4.4.7/lib/node_modules/pm2/.editorconfig'
+137 error error rolling back     at Error (native)
+137 error error rolling back  { [Error: EACCES: permission denied, unlink '/Users/seanthomas/.nvm/versions/node/v4.4.7/lib/node_modules/pm2/.editorconfig']
+137 error error rolling back   errno: -13,
+137 error error rolling back   code: 'EACCES',
+137 error error rolling back   syscall: 'unlink',
+137 error error rolling back   path: '/Users/seanthomas/.nvm/versions/node/v4.4.7/lib/node_modules/pm2/.editorconfig' }
