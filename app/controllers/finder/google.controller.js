@@ -28,7 +28,7 @@ function findCompanyWebsite(companyName, retry) {
     retry = 0;
   }
   var proxy = {
-    ip: "108.59.14.203",
+    ip: "108.59.14.208",
     port: 13041,
     username: null,
     password: null
