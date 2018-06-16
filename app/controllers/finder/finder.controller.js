@@ -96,23 +96,25 @@ exports.index = function(req, res) {
 
   console.log('tagIncoming ' + numIncoming);
   var domain = utils.purifyDomain(req.query.domain),
-    firstName = utils.cleanFirst(utils.purifyName(req.query.first)),
-    lastName = utils.cleanLast(utils.purifyName(req.query.last));
+  firstName = utils.cleanFirst(utils.purifyName(req.query.first)),
+  lastName = utils.cleanLast(utils.purifyName(req.query.last));
   firstName = firstName ? firstName.toLowerCase() : firstName;
   lastName = lastName ? lastName.toLowerCase() : lastName;
   findCompanyUrl(domain).then(function(data) {
     data = data ? data.toLowerCase() : data;
     domain = utils.purifyDomain(data);
-    return Lead.findOne({firstName: firstName, lastName: lastName, domain: domain}).exec();
-  }).then(function(lead) {
+    //return Lead.findOne({firstName: firstName, lastName: lastName, domain: domain}).exec();
+  //}).then(function(lead) {
     //if (typeof lead != 'undefined' && lead != null && moment(lead.created).isAfter(moment().subtract(3, 'months'))) {
     //return lead; //console.log('cached');
     //} else {
     //  return guessEmail(firstName, lastName, domain)
     //}
   //}).then(function(lead) {
-    console.log(lead)
-    return res.json(lead);
+    //console.log(lead)
+    return res.json({
+      domain: domain
+    });
   }).catch(function (err) {
     console.log(err)
     return utils.handleError(err, res, firstName, lastName, domain);
