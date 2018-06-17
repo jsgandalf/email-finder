@@ -56,6 +56,7 @@ function findCompanyWebsite(companyName, retry) {
     console.log(data)
     return data;
   }).catch(function(err) {
+    console.log(err);
     console.log('retry')
     retry += 1;
     if (retry < 2) {

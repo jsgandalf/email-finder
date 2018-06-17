@@ -56,7 +56,6 @@ function guessEmail(firstName, lastName, domain){
   }).then(function(data){
     var mxRecordIp = data;
     console.log(mxRecordIp)
-
     console.log('Verifying: ' + firstName + ' ' + lastName + ' on ' + domain);
 
     return reflectMapWait(patterns, function (pattern) {
@@ -100,6 +99,8 @@ exports.index = function(req, res) {
   lastName = utils.cleanLast(utils.purifyName(req.query.last));
   firstName = firstName ? firstName.toLowerCase() : firstName;
   lastName = lastName ? lastName.toLowerCase() : lastName;
+  //console.log("stopppings -------");
+  //process.exit(1);
   findCompanyUrl(domain).then(function(data) {
     data = data ? data.toLowerCase() : data;
     domain = utils.purifyDomain(data);
