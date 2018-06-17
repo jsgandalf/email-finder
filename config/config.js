@@ -4,6 +4,13 @@ var path = require('path'),
     _ = require('lodash');
 
 var config = {
+  mongo: {
+    options: {
+      db: {
+        safe: true
+      }
+    }
+  },
   development: {
     root: rootPath,
     app: {

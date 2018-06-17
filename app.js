@@ -9,7 +9,9 @@ var express = require('express'),
     cancellation: true
   });
 
-mongoose.connect(config.db);
+mongoose.connect(config.db, {db: {
+        safe: true
+      }});
 var db = mongoose.connection;
 config.db = db;
 db.on('error', function () {
