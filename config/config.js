@@ -10,7 +10,7 @@ var config = {
       name: 'messagesumo-email'
     },
     port: 3000,
-    db: 'mongodb://adbrocks99afsdasdf:a14AfffbbJJ9dlkUi023jlsdf@candidate.4.mongolayer.com:11502,candidate.7.mongolayer.com:10620/messagesumo-email?replicaSet=set-591e662f21cc157adc000826'
+    db: 'mongodb://adbrocks99afsdasdf:a14AfffbbJJ9dlkUi023jlsdf@candidate.50.mongolayer.com:10869,candidate.15.mongolayer.com:11257/gator-leads-email?replicaSet=set-586df676dfa5cc456400034a'
   },
 
   test: {
@@ -19,7 +19,7 @@ var config = {
       name: 'messagesumo-email'
     },
     port: 3000,
-    db: 'mongodb://adbrocks99afsdasdf:a14AfffbbJJ9dlkUi023jlsdf@candidate.4.mongolayer.com:11502,candidate.7.mongolayer.com:10620/messagesumo-email?replicaSet=set-591e662f21cc157adc000826'
+    db: 'mongodb://adbrocks99afsdasdf:a14AfffbbJJ9dlkUi023jlsdf@candidate.50.mongolayer.com:10869,candidate.15.mongolayer.com:11257/gator-leads-email?replicaSet=set-586df676dfa5cc456400034a'
   },
 
   production: {
@@ -28,7 +28,7 @@ var config = {
       name: 'messagesumo-email'
     },
     port: 3000,
-    db: 'mongodb://adbrocks99afsdasdf:a14AfffbbJJ9dlkUi023jlsdf@candidate.4.mongolayer.com:11502,candidate.7.mongolayer.com:10620/messagesumo-email?replicaSet=set-591e662f21cc157adc000826'
+    db: 'mongodb://adbrocks99afsdasdf:a14AfffbbJJ9dlkUi023jlsdf@candidate.50.mongolayer.com:10869,candidate.15.mongolayer.com:11257/gator-leads-email?replicaSet=set-586df676dfa5cc456400034a'
   }
 };
 //mongo candidate.52.mongolayer.com:10634/messagesumo-email -u adbrocks99 -pa14AbbJJ9dlkUi023jlsdf
